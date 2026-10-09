@@ -56,9 +56,44 @@
                     <p class="font-bold text-gray-600 text-xs sm:text-sm mt-1">Simpan sekarang sebelum kedaluwarsa dalam 24 jam.</p>
                 </div>
 
+                <!-- Interactive Preview Tab Switcher -->
+                <div id="preview-tab-bar" class="w-full flex items-center justify-between gap-2 mb-3">
+                    <div class="flex items-center gap-2 overflow-x-auto">
+                        <button type="button" id="tab-btn-frame" class="btn-brutal bg-brutalDark text-white px-3 py-1.5 text-xs font-black uppercase whitespace-nowrap">
+                            🖼️ PHOTO STRIP
+                        </button>
+                        <button type="button" id="tab-btn-singles" class="btn-brutal bg-white text-brutalDark px-3 py-1.5 text-xs font-black uppercase whitespace-nowrap">
+                            📸 FOTO SATUAN (<span id="tab-singles-count">0</span>)
+                        </button>
+                    </div>
+                    <span id="preview-badge" class="hidden sm:inline-block bg-brutalYellow border-2 border-brutal px-2 py-0.5 text-[11px] font-black uppercase">
+                        PRATINJAU FOTO
+                    </span>
+                </div>
+
                 <!-- Preview Box -->
-                <div class="border-brutal p-2 sm:p-4 bg-brutalBg w-full flex items-center justify-center mb-6 shadow-neo">
-                    <img id="result-preview" alt="Hasil Foto Photobooth" class="max-h-[60vh] max-w-full object-contain border-2 border-brutalDark bg-white shadow-sm">
+                <div class="border-brutal p-2 sm:p-4 bg-brutalBg w-full flex flex-col items-center justify-center mb-3 shadow-neo relative">
+                    <img id="result-preview" alt="Hasil Foto Photobooth" class="max-h-[55vh] max-w-full object-contain border-2 border-brutalDark bg-white shadow-sm transition-all" title="Klik foto untuk melihat pratinjau">
+                    
+                    <!-- Caption & Download Active Photo -->
+                    <div class="w-full flex items-center justify-between mt-3 pt-2 border-t-2 border-brutal">
+                        <div class="flex items-center gap-2 truncate">
+                            <span id="current-preview-badge" class="bg-brutalPink text-white text-[10px] font-black px-1.5 py-0.5 border border-brutal uppercase">UTAMA</span>
+                            <span id="current-preview-label" class="text-xs font-black uppercase text-gray-800 truncate">Photo Strip Frame</span>
+                        </div>
+                        <button type="button" id="btn-download-active" class="btn-brutal bg-white hover:bg-brutalYellow text-xs font-black px-3 py-1 flex items-center gap-1 shadow-neo-hover">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                            <span>UNDUH FOTO INI</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Thumbnail Selector Strip (Klik untuk Ganti Preview Cepat) -->
+                <div id="thumbnail-strip-container" class="w-full mb-6">
+                    <span class="text-[10px] font-black text-gray-500 uppercase tracking-wider block mb-1.5">PILIH FOTO UNTUK PRATINJAU:</span>
+                    <div id="thumbnail-strip" class="flex items-center gap-2 overflow-x-auto pb-2 hide-scrollbar">
+                        <!-- Injected via JS -->
+                    </div>
                 </div>
 
                 <!-- Info Cards -->

@@ -151,6 +151,12 @@ export function createResultController({ onSessionReady, onSessionReset }) {
         }
     }
 
+    function formatTime(seconds) {
+        const m = Math.floor(seconds / 60);
+        const s = seconds % 60;
+        return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+    }
+
     function stopAutoResetTimer() {
         if (autoResetInterval) {
             clearInterval(autoResetInterval);
@@ -158,14 +164,14 @@ export function createResultController({ onSessionReady, onSessionReset }) {
         }
     }
 
-    function startAutoResetTimer(durationSeconds = 60) {
+    function startAutoResetTimer(durationSeconds = 300) {
         stopAutoResetTimer();
         let remaining = durationSeconds;
-        if (el.autoResetTimer) el.autoResetTimer.innerText = remaining;
+        if (el.autoResetTimer) el.autoResetTimer.innerText = formatTime(remaining);
 
         autoResetInterval = setInterval(() => {
             remaining--;
-            if (el.autoResetTimer) el.autoResetTimer.innerText = remaining;
+            if (el.autoResetTimer) el.autoResetTimer.innerText = formatTime(remaining);
 
             if (remaining <= 0) {
                 stopAutoResetTimer();
@@ -254,7 +260,7 @@ async function createSinglePhotoBlobs(photos, filterCss) {
                 alertToast('Sesi foto berhasil disimpan ke cloud! ☁️✨');
             }
 
-            startAutoResetTimer(60);
+            startAutoResetTimer(300);
             if (onSessionReady) onSessionReady();
 
         } catch (err) {

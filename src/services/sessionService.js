@@ -55,6 +55,29 @@ export async function createSessionAndUpload({ blob, format, frame, singleBlobs 
 
     if (!isConfigured || !supabase) {
         console.warn('Supabase belum dikonfigurasi. Berjalan dalam mode lokal / offline fallback.');
+        const offlineSingles = singleBlobs.map((b, idx) => ({
+            index: idx + 1,
+            url: URL.createObjectURL(b),
+            path: `offline/single_${idx + 1}.jpg`
+        }));
+        const offlineSession = {
+            id: sessionId,
+            download_token: downloadToken,
+            frame_id: frame?.id || 'unknown',
+            frame_name: frame?.name || 'Standard Frame',
+            output_type: format,
+            result_blob_url: URL.createObjectURL(blob),
+            single_photos: offlineSingles,
+            expires_at: expiresAt
+        };
+        window[`_bapoto_offline_${downloadToken}`] = offlineSession;
+        try {
+            sessionStorage.setItem(`bapoto_offline_${downloadToken}`, JSON.stringify({
+                ...offlineSession,
+                result_blob_url: undefined
+            }));
+        } catch (_) {}
+
         return {
             success: true,
             sessionId,
@@ -169,6 +192,15 @@ export async function getSessionByDownloadToken(token) {
     }
 
     if (!isConfigured || !supabase) {
+        if (window[`_bapoto_offline_${token}`]) {
+            const cached = window[`_bapoto_offline_${token}`];
+            return {
+                valid: true,
+                session: cached,
+                fileUrl: cached.result_blob_url,
+                singlePhotos: cached.single_photos || []
+            };
+        }
         return {
             valid: false,
             error: 'Backend Supabase belum dikonfigurasi. Harap hubungi operator photobooth.'
@@ -204,7 +236,26 @@ export async function getSessionByDownloadToken(token) {
 
         // 2. Buat Signed URLs untuk foto satuan tanpa frame bila ada
         const singlePhotos = [];
-        const rawPaths = Array.isArray(data.single_photos) ? data.single_photos : [];
+        let rawPaths = Array.isArray(data.single_photos) ? data.single_photos : [];
+
+        // FALLBACK: Bila kolom single_photos di DB belum tersimpan, cari file langsung di storage bucket sesi (${data.id})
+        if (rawPaths.length === 0 && data.id) {
+            try {
+                const { data: storageList, error: listError } = await supabase.storage
+                    .from(STORAGE_BUCKET)
+                    .list(data.id);
+
+                if (!listError && Array.isArray(storageList)) {
+                    const foundSingles = storageList
+                        .filter(f => f.name && f.name.startsWith('single_'))
+                        .sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true }));
+
+                    rawPaths = foundSingles.map(f => `${data.id}/${f.name}`);
+                }
+            } catch (listErr) {
+                console.warn('Storage list fallback error for single photos:', listErr);
+            }
+        }
 
         if (rawPaths.length > 0) {
             try {
