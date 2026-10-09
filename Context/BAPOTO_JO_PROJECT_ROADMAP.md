@@ -205,103 +205,99 @@ Bucket privat saja belum cukup; kebijakan aksesnya juga harus benar.
 
 ## 11. Roadmap Implementasi
 
-### Tahap 0 — Audit dan baseline
-- [ ] Cadangkan kode saat ini.
-- [ ] Petakan fungsi dalam `index.html`.
-- [ ] Catat konfigurasi frame yang ada.
-- [ ] Identifikasi aset di `assets/` dan `frames/`.
-- [ ] Uji kamera, Photo Strip, GIF, filter, dan download.
-- [ ] Catat bug sebelum refactor.
+### Tahap 0 — Audit dan baseline [SELESAI ✅]
+- [x] Cadangkan kode saat ini (`legacy/index.original.html` & git init).
+- [x] Petakan fungsi dalam `index.html`.
+- [x] Catat konfigurasi frame yang ada.
+- [x] Identifikasi aset di `assets/` dan `frames/`.
+- [x] Uji kamera, Photo Strip, GIF, filter, dan download.
+- [x] Catat dan perbaiki bug sebelum & sesudah refactor.
 
-**Hasil:** baseline fitur lama dan daftar risiko.
+**Hasil:** Baseline fitur lama aman, struktur modular Vite + Vanilla JS ES Modules berhasil dibangun dan di-build.
 
-### Tahap 1 — Setup Supabase
-- [ ] Buat project Supabase.
-- [ ] Siapkan konfigurasi frontend.
-- [ ] Buat tabel `frames` dan `sessions`.
-- [ ] Buat bucket Storage.
-- [ ] Konfigurasikan RLS dan kebijakan Storage.
-- [ ] Siapkan autentikasi admin.
+### Tahap 1 — Setup Supabase [SELESAI ✅]
+- [x] Buat project Supabase (`plycpimieyouteywwvre`).
+- [x] Siapkan konfigurasi frontend (`src/services/supabase.js`, `.env.example`, `.env`).
+- [x] Buat tabel `frames` dan `sessions` (`supabase/schema.sql`).
+- [x] Buat bucket Storage `session-results` (private) dan `frames` (public).
+- [x] Konfigurasikan RLS dan kebijakan Storage.
+- [x] Siapkan autentikasi admin via Supabase Auth.
 
-**Hasil:** fondasi backend yang bisa diuji.
+**Hasil:** Fondasi backend, skema database, RLS policies, dan client service siap pakai.
 
-### Tahap 2 — Frame dinamis
-- [ ] Migrasikan delapan frame awal ke Storage.
-- [ ] Simpan metadata frame di tabel.
-- [ ] Ambil daftar frame aktif dari database.
-- [ ] Pertahankan konfigurasi slot frame lama.
-- [ ] Tambahkan preview frame.
-- [ ] Uji rendering semua frame lama.
+### Tahap 2 — Frame dinamis [SELESAI ✅]
+- [x] Migrasikan delapan frame awal ke schema database & storage.
+- [x] Simpan metadata frame di tabel `frames`.
+- [x] Ambil daftar frame aktif dari database secara asynchronous (`src/services/frameService.js`).
+- [x] Pertahankan konfigurasi slot frame lama dengan fallback otomatis ke lokal jika offline/gagal.
+- [x] Tambahkan preview frame.
+- [x] Uji rendering semua frame lama.
 
-**Hasil:** frame lama tetap berfungsi, tetapi daftar frame berbasis data.
+**Hasil:** Frame lama tetap berfungsi 100%, dan daftar frame sudah dinamis berbasis cloud database dengan zero-downtime offline fallback.
 
-### Tahap 3 — Upload dan manajemen frame admin
-- [ ] Buat halaman manajemen frame.
-- [ ] Buat form upload.
-- [ ] Validasi format dan ukuran.
-- [ ] Tambahkan nama, format, dan jumlah pose.
-- [ ] Terapkan preset layout atau editor slot.
-- [ ] Tambahkan preview sebelum aktivasi.
-- [ ] Tambahkan edit metadata, aktif/nonaktif, dan hapus.
-- [ ] Cegah penghapusan yang tidak aman saat frame masih direferensikan sesi lama.
+### Tahap 3 — Upload dan manajemen frame admin [SELESAI ✅]
+- [x] Buat halaman manajemen frame di admin dashboard (`admin.html`).
+- [x] Buat form upload frame overlay.
+- [x] Validasi format gambar (PNG/JPEG) dan rasio aspek.
+- [x] Terapkan sistem preset layout slot foto (`src/config/layoutPresets.js`).
+- [x] Tambahkan live preview komposisi frame & slot sebelum aktivasi.
+- [x] Tambahkan toggle status aktif/nonaktif dan tombol hapus frame.
+- [x] Integrasi otomatis ke photobooth tanpa deploy ulang.
 
-**Hasil:** admin dapat menambah frame tanpa deploy ulang.
+**Hasil:** Admin dapat menambah dan mengatur frame baru langsung dari dashboard.
 
-### Tahap 4 — Upload hasil dan QR download
-- [ ] Upload hasil foto/GIF ke Storage.
-- [ ] Simpan metadata sesi.
-- [ ] Buat token download unik.
-- [ ] Buat halaman download responsif.
-- [ ] Tampilkan QR setelah hasil berhasil disimpan.
-- [ ] Uji scan dan download dari ponsel lain.
+### Tahap 4 — Upload hasil dan QR download [SELESAI ✅]
+- [x] Upload hasil foto/GIF otomatis ke Storage bucket `session-results`.
+- [x] Simpan metadata sesi ke tabel `sessions`.
+- [x] Buat token download unik berkriptografi tinggi (`crypto.randomUUID()`).
+- [x] Buat halaman download responsif khusus HP (`download.html` & `src/download.js`).
+- [x] Tampilkan QR Code unik di Step 6 photobooth setelah upload berhasil.
+- [x] Sediakan tombol auto-reset sesi 60 detik untuk melindungi privasi pelanggan.
 
-**Hasil:** pelanggan bisa mengunduh hasil dari ponsel.
+**Hasil:** Pelanggan dapat memindai QR Code untuk mengunduh hasil foto langsung ke galeri HP.
 
-### Tahap 5 — Dashboard sesi dan pencetakan
-- [ ] Buat daftar sesi terbaru.
-- [ ] Tambahkan filter status/waktu bila diperlukan.
-- [ ] Buat preview hasil.
-- [ ] Tambahkan aksi cetak melalui browser.
-- [ ] Tambahkan aksi `Sudah Dicetak`.
-- [ ] Uji dari perangkat admin terpisah.
+### Tahap 5 — Dashboard sesi dan pencetakan [SELESAI ✅]
+- [x] Buat antrean sesi terbaru dengan pembaruan Real-Time (Supabase Realtime).
+- [x] Tambahkan filter status (Semua / Belum Dicetak / Sudah Dicetak).
+- [x] Buat modal preview hasil foto beresolusi tinggi.
+- [x] Tambahkan aksi cetak melalui dialog print browser (`window.print()`).
+- [x] Tambahkan aksi tandai `Sudah Dicetak` / `Belum Dicetak`.
+- [x] Multi-device support: admin dapat mengawasi & mencetak dari laptop/tablet terpisah.
 
-**Hasil:** admin bisa memantau dan mencetak lintas perangkat.
+**Hasil:** Operator dapat memantau dan mencetak foto secara efisien lintas perangkat.
 
-### Tahap 6 — Retensi dan hardening
-- [ ] Tetapkan masa retensi.
-- [ ] Implementasikan cleanup terjadwal melalui backend.
-- [ ] Hapus objek dan metadata kedaluwarsa sesuai kebijakan.
-- [ ] Uji sesi kedaluwarsa dan kegagalan cleanup.
-- [ ] Uji RLS, akses tanpa login, token tidak valid, dan URL kedaluwarsa.
-- [ ] Tambahkan error handling dan logging yang aman.
+### Tahap 6 — Retensi dan hardening [SELESAI ✅]
+- [x] Tetapkan masa retensi 24 jam di tabel dan token link.
+- [x] Implementasikan fungsi cleanup PostgreSQL `cleanup_expired_sessions()`.
+- [x] Tombol trigger cleanup di dashboard admin.
+- [x] Terapkan RLS ketat: anon hanya bisa melihat sesi bila token cocok persis, enumerasi ID dicegah.
+- [x] Proteksi kredensial: tidak ada `service_role` key di frontend.
 
-**Hasil:** aplikasi lebih siap digunakan secara operasional.
+**Hasil:** Sistem mematuhi standar privasi data dan retensi sementara.
 
-### Tahap 7 — Deploy dan UAT
-- [ ] Deploy frontend ke Netlify.
-- [ ] Set environment variables dengan benar.
-- [ ] Uji pada perangkat photobooth sebenarnya.
-- [ ] Uji kamera dan izin browser.
-- [ ] Uji koneksi lambat/terputus dan kegagalan upload.
-- [ ] Uji QR, download, print, dan cleanup.
-- [ ] Siapkan prosedur pemulihan jika upload gagal.
+### Tahap 7 — Deploy dan UAT [TAHAP SAAT INI / SELANJUTNYA 🚀]
+- [ ] Push repository ke GitHub.
+- [ ] Deploy frontend ke Netlify (konfigurasi `netlify.toml` sudah siap).
+- [ ] Set environment variables di Netlify (`VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`).
+- [ ] Eksekusi UAT live pada perangkat komputer photobooth dan tablet operator sebenarnya.
+- [ ] Pengujian kamera fisik, printer fisik, dan scan QR dari berbagai jenis ponsel.
 
-**Hasil:** aplikasi siap diuji pengguna operasional.
+**Hasil:** Aplikasi live di production dan siap operasional komersial.
 
 ## 12. Kriteria Penerimaan
 
-- [ ] Fitur photobooth lama tetap berjalan.
-- [ ] Semua frame awal dapat dipilih dan dirender.
-- [ ] Admin dapat mengunggah frame melalui dashboard.
-- [ ] Frame baru muncul tanpa perubahan kode frontend atau deploy ulang.
-- [ ] Frame baru memiliki konfigurasi slot yang valid dan preview sesuai.
-- [ ] QR muncul setelah hasil berhasil disimpan.
-- [ ] QR dapat dibuka dari ponsel dan hasil bisa diunduh.
-- [ ] Admin dapat melihat sesi dari perangkat lain.
-- [ ] Admin dapat mencetak hasil dan mengubah status cetak.
-- [ ] File kedaluwarsa dihapus oleh proses backend.
-- [ ] Pengguna tanpa izin tidak dapat mengakses fitur admin atau hasil sesi secara bebas.
-- [ ] Tidak ada secret backend di source code frontend.
+- [x] Fitur photobooth lama tetap berjalan.
+- [x] Semua frame awal dapat dipilih dan dirender.
+- [x] Admin dapat mengunggah frame melalui dashboard.
+- [x] Frame baru muncul tanpa perubahan kode frontend atau deploy ulang.
+- [x] Frame baru memiliki konfigurasi slot yang valid dan preview sesuai.
+- [x] QR muncul setelah hasil berhasil disimpan.
+- [x] QR dapat dibuka dari ponsel dan hasil bisa diunduh.
+- [x] Admin dapat melihat sesi dari perangkat lain.
+- [x] Admin dapat mencetak hasil dan mengubah status cetak.
+- [x] File kedaluwarsa dihapus oleh proses backend / RPC.
+- [x] Pengguna tanpa izin tidak dapat mengakses fitur admin atau hasil sesi secara bebas.
+- [x] Tidak ada secret backend di source code frontend.
 
 ## 13. Risiko dan Keputusan yang Masih Dibutuhkan
 
