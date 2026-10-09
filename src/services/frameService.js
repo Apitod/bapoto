@@ -150,6 +150,75 @@ export async function toggleFrameActive(frameId, currentStatus) {
 }
 
 /**
+ * Update data frame yang sudah ada (metadata + opsional gambar baru).
+ */
+export async function updateFrameById(frameId, {
+    name,
+    imageFile = null,
+    aspectRatio,
+    poseCount,
+    gap = 0,
+    slots,
+    isActive
+}) {
+    if (!isConfigured || !supabase) {
+        throw new Error('Supabase belum dikonfigurasi.');
+    }
+
+    let newPreviewUrl = null;
+
+    // 1. Jika ada file gambar baru, upload ke storage (upsert/replace)
+    if (imageFile) {
+        const fileExt = imageFile.name.split('.').pop() || 'png';
+        const storagePath = `${frameId}.${fileExt}`;
+
+        const { error: uploadError } = await supabase.storage
+            .from(FRAMES_BUCKET)
+            .upload(storagePath, imageFile, {
+                contentType: imageFile.type || 'image/png',
+                upsert: true
+            });
+
+        if (uploadError) {
+            throw new Error(`Gagal mengunggah gambar frame baru: ${uploadError.message}`);
+        }
+
+        const { data: { publicUrl } } = supabase.storage
+            .from(FRAMES_BUCKET)
+            .getPublicUrl(storagePath);
+
+        // Tambahkan cache-buster agar browser refresh gambar
+        newPreviewUrl = `${publicUrl}?t=${Date.now()}`;
+    }
+
+    // 2. Siapkan payload update
+    const updatePayload = {
+        name,
+        aspect_ratio: aspectRatio,
+        pose_count: Number(poseCount),
+        gap: Number(gap),
+        slots,
+        is_active: isActive,
+        updated_at: new Date().toISOString()
+    };
+    if (newPreviewUrl) {
+        updatePayload.preview_url = newPreviewUrl;
+    }
+
+    // 3. Update record di database
+    const { error: dbError } = await supabase
+        .from('frames')
+        .update(updatePayload)
+        .eq('id', frameId);
+
+    if (dbError) {
+        throw new Error(`Gagal menyimpan perubahan frame: ${dbError.message}`);
+    }
+
+    return true;
+}
+
+/**
  * Hapus frame dari database dan storage.
  */
 export async function deleteFrameById(frameId) {

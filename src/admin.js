@@ -18,6 +18,7 @@ import {
 import {
     getAllFramesForAdmin,
     createNewFrame,
+    updateFrameById,
     toggleFrameActive,
     deleteFrameById
 } from './services/frameService.js';
@@ -32,6 +33,9 @@ let allAdminFrames = [];
 let activeSubscription = null;
 let currentPreviewUrl = '';
 let currentPreviewSession = null;
+
+// State untuk Edit Frame (null = mode tambah baru)
+let editingFrameId = null;
 
 const el = {
     // Auth & Layout
@@ -367,6 +371,9 @@ function renderFramesGrid(isLocal) {
                     ${isActive ? 'NONAKTIFKAN' : 'AKTIFKAN'}
                 </button>
                 ${!isLocal ? `
+                    <button type="button" class="btn-edit-frame btn-brutal bg-brutalYellow text-brutalDark py-2 text-xs font-black" data-id="${frame.id}">
+                        ✏️ EDIT FRAME
+                    </button>
                     <button type="button" class="btn-delete-frame btn-brutal bg-red-100 border-red-400 text-red-700 hover:bg-red-200 py-2 text-xs font-black" data-id="${frame.id}">
                         🗑 HAPUS FRAME
                     </button>
@@ -1235,8 +1242,73 @@ el.frameFile.addEventListener('change', (e) => {
     }
 });
 
+// Buka modal Edit Frame dengan data yang sudah ada
+function openEditFrameModal(frame) {
+    editingFrameId = frame.id;
+
+    // Update judul modal
+    const modalTitle = el.addFrameModal.querySelector('h3');
+    if (modalTitle) modalTitle.innerText = 'Edit Frame: ' + frame.name;
+    if (el.btnSubmitFrame) el.btnSubmitFrame.innerText = 'SIMPAN PERUBAHAN FRAME';
+
+    // Pre-fill form fields
+    el.addFrameForm.reset();
+    if (el.frameName) el.frameName.value = frame.name;
+    if (el.frameIsActive) el.frameIsActive.checked = !!frame.isActive;
+
+    // Muat slot yang ada
+    customSlots = JSON.parse(JSON.stringify(frame.slots || []));
+    selectedSlotIndex = customSlots.length > 0 ? 0 : -1;
+
+    // Setel preset ke yang paling mendekati jumlah pose (atau biarkan default)
+    const matchingPreset = LAYOUT_PRESETS.find(p => p.slots && p.slots.length === customSlots.length);
+    if (matchingPreset && el.framePreset) {
+        el.framePreset.value = matchingPreset.id;
+    }
+
+    // Load preview gambar frame yang ada dari URL
+    frameTransform.img = null;
+    resetFrameTransform();
+    if (el.framePreviewPlaceholder) el.framePreviewPlaceholder.classList.remove('hidden');
+    if (el.framePreviewCanvas) el.framePreviewCanvas.classList.add('hidden');
+
+    if (frame.previewUrl) {
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
+        img.onload = () => {
+            frameTransform.img = img;
+            // Atur scale ke cover agar gambar mengisi preview
+            const boxW = 1204;
+            const boxH = 1795;
+            const baseScale = Math.min(boxW / img.naturalWidth, boxH / img.naturalHeight);
+            const coverScale = Math.max(boxW / (img.naturalWidth * baseScale), boxH / (img.naturalHeight * baseScale));
+            frameTransform.scale = Number(coverScale.toFixed(2));
+            renderFramePreview();
+        };
+        img.onerror = () => {
+            // Gambar tidak bisa dimuat (CORS dll), preview kosong — user bisa upload ulang
+            if (el.framePreviewPlaceholder) {
+                el.framePreviewPlaceholder.innerText = '⚠️ Gambar tidak dapat dimuat. Upload file baru jika ingin mengganti gambar.';
+                el.framePreviewPlaceholder.classList.remove('hidden');
+            }
+        };
+        img.src = frame.previewUrl;
+    }
+
+    renderSlotControls();
+    renderLiveSlotBoxes();
+    el.addFrameModal.classList.remove('hidden');
+}
+
 // Modal Open/Close Frame
 el.btnOpenAddFrame.addEventListener('click', () => {
+    editingFrameId = null;
+
+    // Reset judul modal ke default
+    const modalTitle = el.addFrameModal.querySelector('h3');
+    if (modalTitle) modalTitle.innerText = 'Unggah & Sesuaikan Komposisi Frame';
+    if (el.btnSubmitFrame) el.btnSubmitFrame.innerText = 'SIMPAN & UNGGAH FRAME';
+
     el.addFrameForm.reset();
     frameTransform.img = null;
     resetFrameTransform();
@@ -1248,12 +1320,18 @@ el.btnOpenAddFrame.addEventListener('click', () => {
 
 function closeAddFrameModal() {
     el.addFrameModal.classList.add('hidden');
+    editingFrameId = null;
+    // Reset judul & tombol ke mode tambah baru
+    const modalTitle = el.addFrameModal.querySelector('h3');
+    if (modalTitle) modalTitle.innerText = 'Unggah & Sesuaikan Komposisi Frame';
+    if (el.btnSubmitFrame) el.btnSubmitFrame.innerText = 'SIMPAN & UNGGAH FRAME';
+    if (el.framePreviewPlaceholder) el.framePreviewPlaceholder.innerText = 'Pilih file gambar untuk melihat dan mengatur komposisi';
 }
 
 el.btnCloseFrameModal.addEventListener('click', closeAddFrameModal);
 el.btnCancelFrame.addEventListener('click', closeAddFrameModal);
 
-// Submit Tambah Frame Baru
+// Submit Tambah Frame Baru / Edit Frame
 el.addFrameForm.addEventListener('submit', async (e) => {
     e.preventDefault();
 
@@ -1261,9 +1339,17 @@ el.addFrameForm.addEventListener('submit', async (e) => {
     const file = el.frameFile.files[0];
     const presetId = el.framePreset.value;
     const isActive = el.frameIsActive.checked;
+    const isEditing = !!editingFrameId;
 
-    if (!file || !frameTransform.img) {
+    // Saat edit, file gambar opsional (bisa tidak diganti)
+    if (!isEditing && (!file || !frameTransform.img)) {
         alertToast('Pilih file gambar frame terlebih dahulu.');
+        return;
+    }
+
+    // Saat edit dengan file baru, butuh img di transform
+    if (isEditing && file && !frameTransform.img) {
+        alertToast('Gambar baru sedang dimuat, tunggu sebentar.');
         return;
     }
 
@@ -1278,36 +1364,56 @@ el.addFrameForm.addEventListener('submit', async (e) => {
         return;
     }
 
+    const originalBtnText = el.btnSubmitFrame.innerText;
     el.btnSubmitFrame.disabled = true;
-    el.btnSubmitFrame.innerText = 'Mengolah & Mengunggah Frame...';
+    el.btnSubmitFrame.innerText = isEditing ? 'Menyimpan Perubahan...' : 'Mengolah & Mengunggah Frame...';
 
     try {
-        // Render ke canvas beresolusi penuh (1204 x 1795 px) dengan transformasi yang diterapkan
-        const exportCanvas = document.createElement('canvas');
-        exportCanvas.width = preset.aspectRatio.width || 1204;
-        exportCanvas.height = preset.aspectRatio.height || 1795;
-        const exportCtx = exportCanvas.getContext('2d');
-        renderTransformedFrameToContext(exportCtx, exportCanvas.width, exportCanvas.height);
+        let processedFile = null;
 
-        const processedBlob = await new Promise((resolve) => exportCanvas.toBlob(resolve, 'image/png'));
-        if (!processedBlob) {
-            throw new Error('Gagal merender gambar frame hasil transformasi.');
+        // Hanya render & export gambar baru jika ada file dipilih (atau saat tambah baru)
+        if (frameTransform.img && (file || !isEditing)) {
+            const exportCanvas = document.createElement('canvas');
+            exportCanvas.width = preset.aspectRatio.width || 1204;
+            exportCanvas.height = preset.aspectRatio.height || 1795;
+            const exportCtx = exportCanvas.getContext('2d');
+            renderTransformedFrameToContext(exportCtx, exportCanvas.width, exportCanvas.height);
+
+            const processedBlob = await new Promise((resolve) => exportCanvas.toBlob(resolve, 'image/png'));
+            if (!processedBlob) {
+                throw new Error('Gagal merender gambar frame hasil transformasi.');
+            }
+
+            const safeFilename = `${name.toLowerCase().replace(/[^a-z0-9_-]/g, '_')}_${Date.now()}.png`;
+            processedFile = new File([processedBlob], safeFilename, { type: 'image/png' });
         }
 
-        const safeFilename = `${name.toLowerCase().replace(/[^a-z0-9_-]/g, '_')}_${Date.now()}.png`;
-        const processedFile = new File([processedBlob], safeFilename, { type: 'image/png' });
+        if (isEditing) {
+            // MODE EDIT: update frame yang sudah ada
+            await updateFrameById(editingFrameId, {
+                name,
+                imageFile: processedFile, // null jika tidak ada file baru
+                aspectRatio: preset.aspectRatio,
+                poseCount: customSlots.length,
+                gap: preset.gap || 0,
+                slots: customSlots,
+                isActive
+            });
+            alertToast('Frame berhasil diperbarui! ✏️✨');
+        } else {
+            // MODE TAMBAH BARU
+            await createNewFrame({
+                name,
+                imageFile: processedFile,
+                aspectRatio: preset.aspectRatio,
+                poseCount: customSlots.length,
+                gap: preset.gap || 0,
+                slots: customSlots,
+                isActive
+            });
+            alertToast('Frame baru berhasil disimpan & diunggah! 🖼️✨');
+        }
 
-        await createNewFrame({
-            name,
-            imageFile: processedFile,
-            aspectRatio: preset.aspectRatio,
-            poseCount: customSlots.length,
-            gap: preset.gap || 0,
-            slots: customSlots,
-            isActive
-        });
-
-        alertToast('Frame baru berhasil disimpan & diunggah! 🖼️✨');
         closeAddFrameModal();
         loadFrames();
     } catch (err) {
@@ -1315,7 +1421,7 @@ el.addFrameForm.addEventListener('submit', async (e) => {
         alertToast(`Gagal: ${err.message}`);
     } finally {
         el.btnSubmitFrame.disabled = false;
-        el.btnSubmitFrame.innerText = 'SIMPAN & UNGGAH FRAME';
+        el.btnSubmitFrame.innerText = originalBtnText;
     }
 });
 
@@ -1407,6 +1513,19 @@ document.addEventListener('click', async (e) => {
         } finally {
             toggleFrameBtn.disabled = false;
         }
+        return;
+    }
+
+    // Edit Frame
+    const editFrameBtn = e.target.closest('.btn-edit-frame');
+    if (editFrameBtn) {
+        const id = editFrameBtn.dataset.id;
+        const frame = allAdminFrames.find(f => f.id === id);
+        if (!frame) {
+            alertToast('Frame tidak ditemukan.');
+            return;
+        }
+        openEditFrameModal(frame);
         return;
     }
 
