@@ -5,7 +5,7 @@
  */
 import './styles/main.css';
 
-import { frameDatabase } from './config/frames.js';
+import { getActiveFrames } from './services/frameService.js';
 import { state, resetCaptureData } from './booth/state.js';
 import { createCamera } from './core/camera.js';
 import { createCaptureController } from './booth/capture.js';
@@ -54,9 +54,11 @@ function navToStep(step) {
     state.currentStep = step;
 
     if (step === 3) {
-        renderFrameCatalog(document.getElementById('frame-catalog'), frameDatabase, frame => {
-            state.selectedFrame = frame;
-            navToStep(4);
+        getActiveFrames().then(frames => {
+            renderFrameCatalog(document.getElementById('frame-catalog'), frames, frame => {
+                state.selectedFrame = frame;
+                navToStep(4);
+            });
         });
     }
 

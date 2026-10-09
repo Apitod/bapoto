@@ -2,11 +2,9 @@
  * Controller untuk Admin Dashboard (admin.html).
  * Menghandle:
  * - Autentikasi Supabase Auth (Login/Logout)
- * - Pemantauan antrean sesi foto secara Real-time
- * - Filter status cetak (Semua / Belum Dicetak / Sudah Dicetak)
- * - Tampilan preview hasil foto & dialog print browser
- * - Update status cetak (printed / unprinted)
- * - Pembersihan sesi kedaluwarsa
+ * - Pemantauan antrean sesi foto secara Real-time & Dialog Print
+ * - Pengelolaan Frame Dinamis (Upload frame baru, preset layout slot, aktif/nonaktifkan, hapus)
+ * - Pembersihan sesi kedaluwarsa (Retensi 24 jam)
  */
 import './styles/main.css';
 import { supabase, isConfigured } from './services/supabase.js';
@@ -17,15 +15,24 @@ import {
     deleteSession,
     runExpiredCleanup
 } from './services/sessionService.js';
+import {
+    getAllFramesForAdmin,
+    createNewFrame,
+    toggleFrameActive,
+    deleteFrameById
+} from './services/frameService.js';
+import { LAYOUT_PRESETS } from './config/layoutPresets.js';
 import { alertToast } from './ui/toast.js';
 import { escapeHtml } from './utils/html.js';
 
 let currentFilter = 'all';
 let allSessions = [];
+let allAdminFrames = [];
 let activeSubscription = null;
 let currentPreviewUrl = '';
 
 const el = {
+    // Auth & Layout
     authSection: document.getElementById('auth-section'),
     dashboardSection: document.getElementById('dashboard-section'),
     unconfiguredAlert: document.getElementById('supabase-unconfigured-alert'),
@@ -36,19 +43,39 @@ const el = {
     userEmail: document.getElementById('admin-user-email'),
     btnLogout: document.getElementById('btn-logout'),
 
-    // Stats
+    // Top View Switcher
+    tabNavSessions: document.getElementById('tab-nav-sessions'),
+    tabNavFrames: document.getElementById('tab-nav-frames'),
+    viewSessions: document.getElementById('view-sessions'),
+    viewFrames: document.getElementById('view-frames'),
+
+    // Sessions Stats & List
     statTotal: document.getElementById('stat-total'),
     statUnprinted: document.getElementById('stat-unprinted'),
     statPrinted: document.getElementById('stat-printed'),
-
-    // List & states
     sessionsLoading: document.getElementById('sessions-loading'),
     sessionsEmpty: document.getElementById('sessions-empty'),
     sessionsGrid: document.getElementById('sessions-grid'),
     btnRefresh: document.getElementById('btn-refresh'),
     btnCleanup: document.getElementById('btn-cleanup'),
 
-    // Modal & Print
+    // Frames View & Modal
+    framesGrid: document.getElementById('frames-grid'),
+    btnOpenAddFrame: document.getElementById('btn-open-add-frame'),
+    addFrameModal: document.getElementById('add-frame-modal'),
+    btnCloseFrameModal: document.getElementById('btn-close-frame-modal'),
+    btnCancelFrame: document.getElementById('btn-cancel-frame'),
+    addFrameForm: document.getElementById('add-frame-form'),
+    frameName: document.getElementById('frame-name'),
+    frameFile: document.getElementById('frame-file'),
+    framePreset: document.getElementById('frame-preset'),
+    frameIsActive: document.getElementById('frame-is-active'),
+    btnSubmitFrame: document.getElementById('btn-submit-frame'),
+    framePreviewImg: document.getElementById('frame-preview-img'),
+    framePreviewSlots: document.getElementById('frame-preview-slots'),
+    framePreviewPlaceholder: document.getElementById('frame-preview-placeholder'),
+
+    // Modal Preview & Print
     previewModal: document.getElementById('preview-modal'),
     modalTitle: document.getElementById('modal-title'),
     modalImage: document.getElementById('modal-image'),
@@ -59,12 +86,13 @@ const el = {
 };
 
 async function initAdmin() {
+    initPresetOptions();
+
     if (!isConfigured || !supabase) {
         if (el.unconfiguredAlert) el.unconfiguredAlert.classList.remove('hidden');
         return;
     }
 
-    // Cek sesi login saat ini
     const { data: { session } } = await supabase.auth.getSession();
     if (session?.user) {
         showDashboard(session.user);
@@ -72,7 +100,6 @@ async function initAdmin() {
         showAuth();
     }
 
-    // Listen auth state changes
     supabase.auth.onAuthStateChange((_event, session) => {
         if (session?.user) {
             showDashboard(session.user);
@@ -99,9 +126,38 @@ function showDashboard(user) {
     el.btnLogout.classList.remove('hidden');
     el.userEmail.innerText = user.email || 'Admin';
 
+    switchView('sessions');
     loadSessions();
+    loadFrames();
     setupRealtimeSubscription();
 }
+
+function switchView(viewName) {
+    if (viewName === 'sessions') {
+        el.tabNavSessions.classList.remove('bg-white', 'text-brutalDark');
+        el.tabNavSessions.classList.add('bg-brutalDark', 'text-white');
+        el.tabNavFrames.classList.remove('bg-brutalDark', 'text-white');
+        el.tabNavFrames.classList.add('bg-white', 'text-brutalDark');
+
+        el.viewSessions.classList.remove('hidden');
+        el.viewFrames.classList.add('hidden');
+    } else {
+        el.tabNavFrames.classList.remove('bg-white', 'text-brutalDark');
+        el.tabNavFrames.classList.add('bg-brutalDark', 'text-white');
+        el.tabNavSessions.classList.remove('bg-brutalDark', 'text-white');
+        el.tabNavSessions.classList.add('bg-white', 'text-brutalDark');
+
+        el.viewFrames.classList.remove('hidden');
+        el.viewSessions.classList.add('hidden');
+    }
+}
+
+el.tabNavSessions.addEventListener('click', () => switchView('sessions'));
+el.tabNavFrames.addEventListener('click', () => switchView('frames'));
+
+// ==========================================
+// 1. SESSIONS & PRINT MANAGEMENT
+// ==========================================
 
 async function loadSessions() {
     el.sessionsLoading.classList.remove('hidden');
@@ -209,7 +265,6 @@ function setupRealtimeSubscription() {
             'postgres_changes',
             { event: '*', schema: 'public', table: 'sessions' },
             () => {
-                console.log('Realtime update detected in sessions table.');
                 loadSessions();
                 alertToast('Sesi diperbarui secara real-time! ⚡');
             }
@@ -217,9 +272,180 @@ function setupRealtimeSubscription() {
         .subscribe();
 }
 
-// Handler Aksi Delegated pada Kartu Sesi
+// ==========================================
+// 2. DYNAMIC FRAME MANAGEMENT
+// ==========================================
+
+function initPresetOptions() {
+    el.framePreset.innerHTML = '';
+    LAYOUT_PRESETS.forEach(preset => {
+        const opt = document.createElement('option');
+        opt.value = preset.id;
+        opt.innerText = preset.name;
+        el.framePreset.appendChild(opt);
+    });
+    updateLiveSlotPreview();
+}
+
+async function loadFrames() {
+    try {
+        const { data, isLocal, error } = await getAllFramesForAdmin();
+        if (error) console.warn(error);
+
+        allAdminFrames = data || [];
+        renderFramesGrid(isLocal);
+    } catch (err) {
+        console.error('Error loading admin frames:', err);
+    }
+}
+
+function renderFramesGrid(isLocal) {
+    el.framesGrid.innerHTML = '';
+
+    allAdminFrames.forEach(frame => {
+        const card = document.createElement('div');
+        card.className = 'card-brutal bg-white p-4 flex flex-col justify-between';
+        const isActive = frame.isActive;
+
+        card.innerHTML = `
+            <div>
+                <div class="w-full bg-gray-100 border-2 border-brutal aspect-[2/3] flex items-center justify-center overflow-hidden mb-3 relative">
+                    <img src="${escapeHtml(frame.previewUrl)}" alt="${escapeHtml(frame.name)}" class="w-full h-full object-cover">
+                    <div class="absolute top-2 right-2 bg-brutalYellow border-2 border-brutal px-2 py-0.5 text-[10px] font-black">
+                        ${frame.poseCount} POSE
+                    </div>
+                </div>
+
+                <div class="flex items-center justify-between mb-2">
+                    <h3 class="font-black text-base uppercase truncate">${escapeHtml(frame.name)}</h3>
+                    <span class="text-[10px] font-black px-2 py-0.5 border ${isActive ? 'bg-brutalGreen text-brutalDark' : 'bg-gray-300 text-gray-700'}">
+                        ${isActive ? 'AKTIF' : 'NON-AKTIF'}
+                    </span>
+                </div>
+            </div>
+
+            <div class="flex flex-col gap-2 mt-3 pt-3 border-t-2 border-brutal">
+                <button type="button" class="btn-toggle-frame btn-brutal ${isActive ? 'bg-gray-200' : 'bg-brutalGreen'} py-2 text-xs font-black" data-id="${frame.id}" data-status="${isActive}">
+                    ${isActive ? 'NONAKTIFKAN' : 'AKTIFKAN'}
+                </button>
+                ${!isLocal && !frame.id.startsWith('frame-') ? `
+                    <button type="button" class="btn-delete-frame text-xs font-bold text-red-600 hover:underline text-center" data-id="${frame.id}">
+                        Hapus Frame
+                    </button>
+                ` : ''}
+            </div>
+        `;
+
+        el.framesGrid.appendChild(card);
+    });
+}
+
+function updateLiveSlotPreview() {
+    const selectedPresetId = el.framePreset.value;
+    const preset = LAYOUT_PRESETS.find(p => p.id === selectedPresetId);
+    if (!preset) return;
+
+    el.framePreviewSlots.innerHTML = '';
+    preset.slots.forEach(slot => {
+        const sBox = document.createElement('div');
+        sBox.style.position = 'absolute';
+        sBox.style.left = `${slot.x}%`;
+        sBox.style.top = `${slot.y}%`;
+        sBox.style.width = `${slot.w}%`;
+        sBox.style.height = `${slot.h}%`;
+        sBox.style.border = '2px dashed #0055FF';
+        sBox.style.backgroundColor = 'rgba(0, 85, 255, 0.2)';
+        if (slot.shape === 'ellipse') {
+            sBox.style.borderRadius = '50%';
+        }
+        el.framePreviewSlots.appendChild(sBox);
+    });
+}
+
+el.framePreset.addEventListener('change', updateLiveSlotPreview);
+
+el.frameFile.addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = (re) => {
+            el.framePreviewImg.src = re.target.result;
+            el.framePreviewImg.classList.remove('hidden');
+            el.framePreviewPlaceholder.classList.add('hidden');
+        };
+        reader.readAsDataURL(file);
+    }
+});
+
+// Modal Open/Close Frame
+el.btnOpenAddFrame.addEventListener('click', () => {
+    el.addFrameForm.reset();
+    el.framePreviewImg.src = '';
+    el.framePreviewImg.classList.add('hidden');
+    el.framePreviewPlaceholder.classList.remove('hidden');
+    updateLiveSlotPreview();
+    el.addFrameModal.classList.remove('hidden');
+});
+
+function closeAddFrameModal() {
+    el.addFrameModal.classList.add('hidden');
+}
+
+el.btnCloseFrameModal.addEventListener('click', closeAddFrameModal);
+el.btnCancelFrame.addEventListener('click', closeAddFrameModal);
+
+// Submit Tambah Frame Baru
+el.addFrameForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const name = el.frameName.value.trim();
+    const file = el.frameFile.files[0];
+    const presetId = el.framePreset.value;
+    const isActive = el.frameIsActive.checked;
+
+    if (!file) {
+        alertToast('Pilih file gambar frame terlebih dahulu.');
+        return;
+    }
+
+    const preset = LAYOUT_PRESETS.find(p => p.id === presetId);
+    if (!preset) {
+        alertToast('Pilih preset slot yang valid.');
+        return;
+    }
+
+    el.btnSubmitFrame.disabled = true;
+    el.btnSubmitFrame.innerText = 'Mengunggah Frame...';
+
+    try {
+        await createNewFrame({
+            name,
+            imageFile: file,
+            aspectRatio: preset.aspectRatio,
+            poseCount: preset.poseCount,
+            gap: preset.gap,
+            slots: preset.slots,
+            isActive
+        });
+
+        alertToast('Frame baru berhasil disimpan & diunggah! 🖼️✨');
+        closeAddFrameModal();
+        loadFrames();
+    } catch (err) {
+        console.error('Submit frame error:', err);
+        alertToast(`Gagal: ${err.message}`);
+    } finally {
+        el.btnSubmitFrame.disabled = false;
+        el.btnSubmitFrame.innerText = 'SIMPAN & UNGGAH FRAME';
+    }
+});
+
+// ==========================================
+// 3. GLOBAL CLICK DELEGATION
+// ==========================================
+
 document.addEventListener('click', async (e) => {
-    // 1. Preview / Print
+    // Preview / Print Sesi
     const previewBtn = e.target.closest('.btn-action-preview');
     if (previewBtn) {
         const id = previewBtn.dataset.id;
@@ -240,7 +466,7 @@ document.addEventListener('click', async (e) => {
         return;
     }
 
-    // 2. Toggle Status Cetak
+    // Toggle Status Cetak Sesi
     const toggleBtn = e.target.closest('.btn-action-toggle');
     if (toggleBtn) {
         const id = toggleBtn.dataset.id;
@@ -262,16 +488,14 @@ document.addEventListener('click', async (e) => {
         return;
     }
 
-    // 3. Hapus Sesi
+    // Hapus Sesi
     const deleteBtn = e.target.closest('.btn-action-delete');
     if (deleteBtn) {
         const id = deleteBtn.dataset.id;
         const session = allSessions.find(s => s.id === id);
         if (!session) return;
 
-        if (!confirm('Apakah Anda yakin ingin menghapus sesi foto ini dari database dan cloud storage?')) {
-            return;
-        }
+        if (!confirm('Apakah Anda yakin ingin menghapus sesi foto ini dari database dan cloud storage?')) return;
 
         const { error } = await deleteSession(session);
         if (error) {
@@ -281,6 +505,44 @@ document.addEventListener('click', async (e) => {
             updateStats();
             renderSessions();
             alertToast('Sesi berhasil dihapus.');
+        }
+        return;
+    }
+
+    // Toggle Status Aktif Frame
+    const toggleFrameBtn = e.target.closest('.btn-toggle-frame');
+    if (toggleFrameBtn) {
+        const id = toggleFrameBtn.dataset.id;
+        const status = toggleFrameBtn.dataset.status === 'true';
+
+        toggleFrameBtn.disabled = true;
+        try {
+            const newStatus = await toggleFrameActive(id, status);
+            const target = allAdminFrames.find(f => f.id === id);
+            if (target) target.isActive = newStatus;
+            renderFramesGrid(false);
+            alertToast(newStatus ? 'Frame diaktifkan!' : 'Frame dinonaktifkan.');
+        } catch (err) {
+            alertToast(`Gagal: ${err.message}`);
+        } finally {
+            toggleFrameBtn.disabled = false;
+        }
+        return;
+    }
+
+    // Hapus Frame
+    const deleteFrameBtn = e.target.closest('.btn-delete-frame');
+    if (deleteFrameBtn) {
+        const id = deleteFrameBtn.dataset.id;
+        if (!confirm('Hapus frame ini dari database dan storage?')) return;
+
+        try {
+            await deleteFrameById(id);
+            allAdminFrames = allAdminFrames.filter(f => f.id !== id);
+            renderFramesGrid(false);
+            alertToast('Frame berhasil dihapus.');
+        } catch (err) {
+            alertToast(`Gagal menghapus: ${err.message}`);
         }
         return;
     }
