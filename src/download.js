@@ -6,6 +6,7 @@
 import './styles/main.css';
 import { getSessionByDownloadToken } from './services/sessionService.js';
 import { alertToast } from './ui/toast.js';
+import { printPhoto } from './utils/print.js';
 
 const el = {
     loading: document.getElementById('loading-state'),
@@ -23,6 +24,7 @@ const el = {
     format: document.getElementById('session-format'),
     frame: document.getElementById('session-frame'),
     btnDownload: document.getElementById('btn-download'),
+    btnDownloadPrint: document.getElementById('btn-download-print'),
     btnDownloadAll: document.getElementById('btn-download-all'),
     btnDownloadAllLabel: document.getElementById('btn-download-all-label'),
     btnShare: document.getElementById('btn-share'),
@@ -131,6 +133,28 @@ async function initDownloadPage() {
             await downloadFileFromUrl(mainFileUrl, mainFilename);
             alertToast('Foto strip frame berhasil diunduh! 📸✨');
         });
+
+        // Setup Tombol Cetak Foto
+        if (el.btnDownloadPrint) {
+            if (isGif) {
+                el.btnDownloadPrint.classList.add('hidden');
+            } else {
+                el.btnDownloadPrint.classList.remove('hidden');
+                el.btnDownloadPrint.addEventListener('click', async () => {
+                    const targetUrl = currentActiveItem?.url || mainFileUrl;
+                    if (!targetUrl) return;
+                    try {
+                        alertToast('Menyiapkan gambar untuk dicetak ke printer... 🖨️');
+                        await printPhoto(targetUrl, {
+                            title: `BAPOTO.JO — ${currentActiveItem?.label || 'Cetak Foto'}`
+                        });
+                    } catch (err) {
+                        console.error('Print download error:', err);
+                        alertToast(`Gagal mencetak: ${err.message}`);
+                    }
+                });
+            }
+        }
 
         // Setup Thumbnail Strip
         el.thumbnailStrip.innerHTML = '';

@@ -24,12 +24,14 @@ import {
 import { LAYOUT_PRESETS } from './config/layoutPresets.js';
 import { alertToast } from './ui/toast.js';
 import { escapeHtml } from './utils/html.js';
+import { printPhoto } from './utils/print.js';
 
 let currentFilter = 'all';
 let allSessions = [];
 let allAdminFrames = [];
 let activeSubscription = null;
 let currentPreviewUrl = '';
+let currentPreviewSession = null;
 
 const el = {
     // Auth & Layout
@@ -460,6 +462,7 @@ document.addEventListener('click', async (e) => {
         }
 
         currentPreviewUrl = signedUrl;
+        currentPreviewSession = session;
         el.modalTitle.innerText = `Preview: ${session.frame_name || 'Sesi'} (${session.id.slice(0, 8)})`;
         el.modalImage.src = signedUrl;
         el.previewModal.classList.remove('hidden');
@@ -553,17 +556,46 @@ el.btnCloseModal.addEventListener('click', () => {
     el.previewModal.classList.add('hidden');
     el.modalImage.src = '';
     currentPreviewUrl = '';
+    currentPreviewSession = null;
 });
 
-el.btnModalPrint.addEventListener('click', () => {
-    if (!currentPreviewUrl) return;
-    el.printImage.src = currentPreviewUrl;
-    el.printArea.classList.remove('hidden');
+el.btnModalPrint.addEventListener('click', async () => {
+    if (!currentPreviewUrl) {
+        alertToast('Pilih foto terlebih dahulu untuk dicetak.');
+        return;
+    }
 
-    setTimeout(() => {
-        window.print();
-        el.printArea.classList.add('hidden');
-    }, 300);
+    const originalContent = el.btnModalPrint.innerHTML;
+    try {
+        el.btnModalPrint.disabled = true;
+        el.btnModalPrint.innerHTML = `
+            <svg class="w-4 h-4 animate-spin mr-1" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+            <span>MENYIAPKAN CETAK...</span>
+        `;
+        alertToast('Membuka dialog cetak printer... 🖨️');
+
+        await printPhoto(currentPreviewUrl, {
+            title: `BAPOTO.JO — ${currentPreviewSession?.frame_name || 'Cetak Foto'}`
+        });
+
+        // Jika sesi belum ditandai sudah dicetak, otomatis perbarui statusnya
+        if (currentPreviewSession && currentPreviewSession.print_status !== 'printed') {
+            try {
+                await updatePrintStatus(currentPreviewSession.id, 'printed');
+                currentPreviewSession.print_status = 'printed';
+                loadSessions();
+                alertToast('Sesi foto otomatis ditandai SUDAH DICETAK! ✅');
+            } catch (statusErr) {
+                console.warn('Gagal memperbarui status cetak otomatis:', statusErr);
+            }
+        }
+    } catch (err) {
+        console.error('Print dialog error:', err);
+        alertToast(`Gagal mencetak: ${err.message}`);
+    } finally {
+        el.btnModalPrint.disabled = false;
+        el.btnModalPrint.innerHTML = originalContent;
+    }
 });
 
 // Login Form Submit

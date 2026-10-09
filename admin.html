@@ -6,35 +6,6 @@
     <title>bapoto.jo — Admin Dashboard</title>
     <meta name="description" content="Dashboard operator photobooth BAPOTO.JO — cetak foto dan kelola sesi.">
     <script type="module" src="/src/admin.js"></script>
-    <style>
-        /* Gaya Khusus Dialog Print Browser */
-        @media print {
-            body * {
-                visibility: hidden;
-            }
-            #print-area, #print-area * {
-                visibility: visible;
-            }
-            #print-area {
-                position: fixed;
-                left: 0;
-                top: 0;
-                width: 100vw;
-                height: 100vh;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                background: white;
-                margin: 0;
-                padding: 0;
-            }
-            #print-image {
-                max-width: 100%;
-                max-height: 100%;
-                object-contain: fit;
-            }
-        }
-    </style>
 </head>
 <body class="min-h-screen flex flex-col font-sans select-none bg-grid-light">
 
@@ -266,8 +237,8 @@
         </div>
     </div>
 
-    <!-- Isolated Print Area for Browser Print Dialog -->
-    <div id="print-area" class="hidden" style="display: none;">
+    <!-- Isolated Print Area for Browser Print Dialog Fallback -->
+    <div id="print-area" class="hidden">
         <img id="print-image" alt="Print Out">
     </div>
 

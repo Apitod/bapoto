@@ -225,6 +225,10 @@
                         <span>DAPATKAN QR CODE</span>
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"></path></svg>
                     </button>
+                    <button type="button" id="btn-print-photo" data-action="print-photo" class="btn-brutal bg-brutalDark text-white py-3.5 font-black text-sm flex justify-center items-center gap-2 hover:bg-gray-800 transition-colors">
+                        <svg class="w-5 h-5 text-brutalYellow" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4H7v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
+                        <span>CETAK PHOTO STRIP (PRINT)</span>
+                    </button>
                     <div class="grid grid-cols-2 gap-3">
                         <button type="button" id="btn-retake" data-nav="3" class="btn-brutal bg-white py-3 font-black text-sm flex justify-center items-center gap-1">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
@@ -234,7 +238,7 @@
                             UNDUH LOKAL
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
                         </button>
-                        <button type="button" id="btn-save-gif" data-action="download-gif" class="hidden btn-brutal bg-brutalGreen text-brutalDark py-3 font-black text-sm flex justify-center items-center gap-1">
+                        <button type="button" id="btn-save-gif" data-action="download-gif" class="hidden btn-brutal bg-brutalGreen text-brutalDark py-3 font-black text-sm flex justify-center items-center gap-1 col-span-2">
                             UNDUH LOKAL GIF
                         </button>
                     </div>
@@ -276,13 +280,17 @@
                 </div>
 
                 <!-- Footer Action Buttons -->
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-6 pt-6 border-t-4 border-brutalDark">
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-6 pt-6 border-t-4 border-brutalDark">
+                    <button type="button" id="btn-qr-print" data-action="print-session" class="btn-brutal bg-brutalYellow text-brutalDark py-3 font-black text-sm flex justify-center items-center gap-2">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4H7v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
+                        CETAK FOTO
+                    </button>
                     <button type="button" id="btn-qr-download-local" data-action="download-current-result" class="btn-brutal bg-white text-brutalDark py-3 font-black text-sm flex justify-center items-center gap-2">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
-                        UNDUH CADANGAN (LOKAL)
+                        UNDUH LOKAL
                     </button>
-                    <button type="button" id="btn-finish-session" data-action="finish-session" class="btn-brutal bg-brutalPink text-white py-3 font-black text-base flex justify-center items-center gap-2 shadow-neo">
-                        <span>SELESAI / SESI BARU</span>
+                    <button type="button" id="btn-finish-session" data-action="finish-session" class="btn-brutal bg-brutalPink text-white py-3 font-black text-sm sm:text-base flex justify-center items-center gap-2 shadow-neo">
+                        <span>SELESAI / BARU</span>
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
                     </button>
                 </div>
@@ -293,6 +301,11 @@
 
     <!-- Hidden Canvas for Offscreen processing -->
     <canvas id="capture-canvas" class="hidden"></canvas>
+
+    <!-- Isolated Print Area Fallback -->
+    <div id="print-area" class="hidden">
+        <img id="print-image" alt="Print Out">
+    </div>
 
     <!-- Global Toast Notifier -->
     <div id="toast" role="status" aria-live="polite" class="fixed top-20 right-4 bg-brutalDark text-white font-bold px-6 py-4 border-brutal shadow-neo z-[100] transform translate-x-[150%] transition-transform duration-300 flex items-center gap-3">

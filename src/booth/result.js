@@ -9,6 +9,7 @@ import { composeGif, RenderCancelled } from '../core/gifRenderer.js';
 import { alertToast } from '../ui/toast.js';
 import { triggerDownload, resultFilename } from '../utils/download.js';
 import { createSessionAndUpload } from '../services/sessionService.js';
+import { printPhoto } from '../utils/print.js';
 
 export function createResultController({ onSessionReady, onSessionReset }) {
     const el = {
@@ -17,6 +18,8 @@ export function createResultController({ onSessionReady, onSessionReset }) {
         loader: document.getElementById('rendering-loader'),
         photoButton: document.getElementById('btn-save-photo'),
         gifButton: document.getElementById('btn-save-gif'),
+        printButton: document.getElementById('btn-print-photo'),
+        qrPrintButton: document.getElementById('btn-qr-print'),
         qrButton: document.getElementById('btn-create-qr'),
         qrCodeImg: document.getElementById('qr-code-img'),
         qrDownloadLink: document.getElementById('qr-download-link'),
@@ -78,6 +81,8 @@ export function createResultController({ onSessionReady, onSessionReset }) {
         el.gifImage.classList.toggle('hidden', !isGif);
         el.photoButton.classList.toggle('hidden', isGif);
         el.gifButton.classList.toggle('hidden', !isGif);
+        if (el.printButton) el.printButton.classList.toggle('hidden', isGif);
+        if (el.qrPrintButton) el.qrPrintButton.classList.toggle('hidden', isGif);
 
         clearTimeout(state.renderTimer);
 
@@ -272,11 +277,34 @@ async function createSinglePhotoBlobs(photos, filterCss) {
         }
     }
 
+    async function printCurrentResult() {
+        if (state.selectedFormat === 'gif') {
+            alertToast('Format GIF animasi tidak dapat dicetak ke printer fisik.');
+            return;
+        }
+
+        try {
+            const dataUrl = el.canvas.toDataURL('image/png');
+            if (!dataUrl) {
+                alertToast('Hasil foto belum siap dicetak.');
+                return;
+            }
+            alertToast('Menyiapkan gambar untuk dicetak ke printer... 🖨️');
+            await printPhoto(dataUrl, {
+                title: `BAPOTO.JO — ${state.selectedFrame?.name || 'Photo Strip'}`
+            });
+        } catch (err) {
+            console.error('Print current result error:', err);
+            alertToast(`Gagal mencetak: ${err.message}`);
+        }
+    }
+
     return {
         renderResult,
         downloadPhoto,
         downloadGif,
         downloadCurrentResult,
+        printCurrentResult,
         handleCreateQr,
         stopAutoResetTimer
     };
