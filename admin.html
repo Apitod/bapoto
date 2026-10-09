@@ -168,44 +168,209 @@
 
     <!-- Modal Tambah Frame Baru -->
     <div id="add-frame-modal" class="hidden fixed inset-0 flex items-center justify-center p-4 overflow-y-auto" style="background-color: rgba(0, 0, 0, 0.75); z-index: 100;">
-        <div class="bg-white border-brutal shadow-neo-lg max-w-2xl w-full p-6 flex flex-col my-8">
-            <div class="flex items-center justify-between pb-4 border-b-2 border-brutal mb-4">
-                <h3 class="font-black text-xl uppercase">Unggah Frame Baru</h3>
-                <button type="button" id="btn-close-frame-modal" class="btn-brutal bg-white p-1 text-xl font-black w-8 h-8 flex items-center justify-center">✕</button>
+        <div class="bg-white border-brutal shadow-neo-lg max-w-4xl w-full p-4 sm:p-6 flex flex-col my-6 max-h-[92vh] overflow-y-auto">
+            <div class="flex items-center justify-between pb-3 border-b-2 border-brutal mb-4">
+                <div class="flex items-center gap-2">
+                    <span class="w-4 h-4 bg-brutalPink border-2 border-brutal inline-block"></span>
+                    <h3 class="font-black text-lg sm:text-xl uppercase tracking-tight">Unggah & Sesuaikan Komposisi Frame</h3>
+                </div>
+                <button type="button" id="btn-close-frame-modal" class="btn-brutal bg-white p-1 text-xl font-black w-8 h-8 flex items-center justify-center hover:bg-gray-100">✕</button>
             </div>
 
             <form id="add-frame-form" class="flex flex-col gap-4">
-                <div>
-                    <label class="block text-xs font-black uppercase mb-1" for="frame-name">Nama Frame</label>
-                    <input id="frame-name" type="text" required placeholder="Contoh: Neon Cyberpunk" class="w-full border-brutal p-3 font-bold text-sm focus:outline-none">
-                </div>
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+                    <!-- Sisi Kiri: Form & Pengaturan Transformasi (7 kolom) -->
+                    <div class="lg:col-span-7 flex flex-col gap-4">
+                        <div>
+                            <label class="block text-xs font-black uppercase mb-1" for="frame-name">Nama Frame</label>
+                            <input id="frame-name" type="text" required placeholder="Contoh: Neon Cyberpunk" class="w-full border-brutal p-3 font-bold text-sm focus:outline-none">
+                        </div>
 
-                <div>
-                    <label class="block text-xs font-black uppercase mb-1" for="frame-file">File Gambar Frame (PNG Transparan Disarankan)</label>
-                    <input id="frame-file" type="file" accept="image/png,image/jpeg" required class="w-full border-brutal p-2 font-bold text-sm bg-gray-50">
-                    <p class="text-[10px] text-gray-500 font-bold mt-1">Rasio optimal: ~1204 x 1795 px.</p>
-                </div>
+                        <div>
+                            <label class="block text-xs font-black uppercase mb-1" for="frame-preset">Preset Layout Slot Foto</label>
+                            <select id="frame-preset" class="w-full border-brutal p-3 font-bold text-sm bg-white focus:outline-none">
+                                <!-- Injected via JS from LAYOUT_PRESETS -->
+                            </select>
+                        </div>
 
-                <div>
-                    <label class="block text-xs font-black uppercase mb-1" for="frame-preset">Preset Layout Slot Foto</label>
-                    <select id="frame-preset" class="w-full border-brutal p-3 font-bold text-sm bg-white focus:outline-none">
-                        <!-- Injected via JS from LAYOUT_PRESETS -->
-                    </select>
-                </div>
+                        <div>
+                            <label class="block text-xs font-black uppercase mb-1" for="frame-file">File Gambar Frame (PNG / JPEG / WebP)</label>
+                            <input id="frame-file" type="file" accept="image/png,image/jpeg,image/webp" class="w-full border-brutal p-2 font-bold text-sm bg-gray-50">
+                            <p id="frame-file-hint" class="text-[10px] text-gray-500 font-bold mt-1">Gunakan kontrol di bawah untuk memutar, zoom, atau menggeser gambar agar pas ke kanvas 1204 x 1795 px.</p>
+                        </div>
 
-                <!-- Live Preview Slot -->
-                <div class="border-brutal p-3 bg-brutalBg flex flex-col items-center">
-                    <span class="text-xs font-black uppercase text-gray-500 mb-2">Pratinjau Komposisi Frame & Slot</span>
-                    <div id="frame-preview-box" class="relative w-48 aspect-[2/3] bg-white border-2 border-brutalDark flex items-center justify-center overflow-hidden" style="max-height: 280px;">
-                        <span id="frame-preview-placeholder" class="text-xs font-bold text-gray-400 text-center p-2">Pilih file untuk melihat preview</span>
-                        <img id="frame-preview-img" class="hidden absolute inset-0 w-full h-full object-contain pointer-events-none z-10" alt="Overlay">
-                        <div id="frame-preview-slots" class="absolute inset-0 pointer-events-none z-0"></div>
+                        <!-- Panel Kontrol Komposisi Frame (Rotate, Geser, Zoom, Flip) -->
+                        <div id="frame-transform-controls" class="border-2 border-brutal p-3 sm:p-4 bg-brutalBg flex flex-col gap-3">
+                            <div class="flex items-center justify-between pb-2 border-b-2 border-brutal">
+                                <span class="text-xs font-black uppercase text-brutalDark flex items-center gap-1.5">
+                                    <svg class="w-4 h-4 text-brutalPink" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"></path></svg>
+                                    Atur Komposisi Frame
+                                </span>
+                                <span class="text-[10px] font-black bg-brutalYellow border border-brutal px-2 py-0.5 uppercase">INTERAKTIF</span>
+                            </div>
+
+                            <!-- Tombol Cepat: Rotate, Flip, Fit, Cover, Reset -->
+                            <div class="grid grid-cols-4 sm:grid-cols-7 gap-1.5 text-center">
+                                <button type="button" id="btn-comp-rotate-left" class="btn-brutal bg-white text-xs font-black py-1.5 px-1 hover:bg-gray-100" title="Putar Kiri 90 Derajat">↺ -90°</button>
+                                <button type="button" id="btn-comp-rotate-right" class="btn-brutal bg-white text-xs font-black py-1.5 px-1 hover:bg-gray-100" title="Putar Kanan 90 Derajat">↻ +90°</button>
+                                <button type="button" id="btn-comp-flip-h" class="btn-brutal bg-white text-xs font-black py-1.5 px-1 hover:bg-gray-100" title="Cermin Horisontal">⇋ FLIP</button>
+                                <button type="button" id="btn-comp-flip-v" class="btn-brutal bg-white text-xs font-black py-1.5 px-1 hover:bg-gray-100" title="Cermin Vertikal">⇅ FLIP</button>
+                                <button type="button" id="btn-comp-fit" class="btn-brutal bg-white text-xs font-black py-1.5 px-1 hover:bg-gray-100" title="Paskan Gambar ke Dalam Frame">🎯 FIT</button>
+                                <button type="button" id="btn-comp-cover" class="btn-brutal bg-white text-xs font-black py-1.5 px-1 hover:bg-gray-100" title="Penuhi Seluruh Frame">🖼️ COVER</button>
+                                <button type="button" id="btn-comp-reset" class="btn-brutal bg-white text-xs font-black py-1.5 px-1 text-red-600 hover:bg-red-50 col-span-4 sm:col-span-1" title="Reset Semua Transformasi">⟲ RESET</button>
+                            </div>
+
+                            <!-- Sliders: Zoom, Rotate, Pan X, Pan Y -->
+                            <div class="flex flex-col gap-2.5 pt-1">
+                                <!-- Zoom Slider -->
+                                <div>
+                                    <div class="flex justify-between items-center text-xs font-black mb-1">
+                                        <label for="comp-scale">ZOOM (PERBESARAN):</label>
+                                        <span id="comp-scale-val" class="font-mono text-brutalPink">100%</span>
+                                    </div>
+                                    <input type="range" id="comp-scale" min="0.2" max="3.0" step="0.05" value="1.0" class="w-full accent-brutalPink cursor-pointer">
+                                </div>
+
+                                <!-- Rotation Slider -->
+                                <div>
+                                    <div class="flex justify-between items-center text-xs font-black mb-1">
+                                        <label for="comp-rotate">ROTASI DERAJAT:</label>
+                                        <span id="comp-rotate-val" class="font-mono text-brutalBlue">0°</span>
+                                    </div>
+                                    <input type="range" id="comp-rotate" min="-180" max="180" step="1" value="0" class="w-full accent-brutalBlue cursor-pointer">
+                                </div>
+
+                                <!-- Geser X -->
+                                <div>
+                                    <div class="flex justify-between items-center text-xs font-black mb-1">
+                                        <label for="comp-pan-x">GESER HORISONTAL (X):</label>
+                                        <span id="comp-pan-x-val" class="font-mono text-gray-800">0%</span>
+                                    </div>
+                                    <input type="range" id="comp-pan-x" min="-100" max="100" step="1" value="0" class="w-full accent-gray-800 cursor-pointer">
+                                </div>
+
+                                <!-- Geser Y -->
+                                <div>
+                                    <div class="flex justify-between items-center text-xs font-black mb-1">
+                                        <label for="comp-pan-y">GESER VERTIKAL (Y):</label>
+                                        <span id="comp-pan-y-val" class="font-mono text-gray-800">0%</span>
+                                    </div>
+                                    <input type="range" id="comp-pan-y" min="-100" max="100" step="1" value="0" class="w-full accent-gray-800 cursor-pointer">
+                                </div>
+                            </div>
+
+                            <!-- Opsi Latar Belakang & Layering Preview -->
+                            <div class="grid grid-cols-2 gap-2 pt-2 border-t border-gray-300 text-xs">
+                                <div>
+                                    <label class="block font-black uppercase text-[10px] text-gray-600 mb-1" for="comp-bg-color">Warna Latar Kanvas</label>
+                                    <select id="comp-bg-color" class="w-full border-2 border-brutal p-1.5 font-bold text-xs bg-white">
+                                        <option value="transparent">Transparan (PNG)</option>
+                                        <option value="#ffffff">Putih (#FFFFFF)</option>
+                                        <option value="#111111">Hitam (#111111)</option>
+                                        <option value="#F4F4F0">Krem (#F4F4F0)</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block font-black uppercase text-[10px] text-gray-600 mb-1" for="comp-layer-mode">Urutan Layer Pratinjau</label>
+                                    <select id="comp-layer-mode" class="w-full border-2 border-brutal p-1.5 font-bold text-xs bg-white">
+                                        <option value="slots-front">Slot di Depan (Cek Posisi)</option>
+                                        <option value="frame-front">Frame di Depan (Hasil Akhir)</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Panel Editor Slot Foto (Kotak Biru) -->
+                        <div id="slot-editor-panel" class="border-2 border-brutal p-3 sm:p-4 bg-white flex flex-col gap-3">
+                            <div class="flex items-center justify-between pb-2 border-b-2 border-brutal">
+                                <span class="text-xs font-black uppercase text-brutalDark flex items-center gap-1.5">
+                                    <span class="w-3 h-3 border-2 border-dashed border-[#0055FF] bg-[#0055FF]/20 inline-block"></span>
+                                    Atur Slot Foto (Kotak Biru)
+                                </span>
+                                <span id="slot-count-badge" class="text-[10px] font-black bg-brutalGreen border border-brutal px-2 py-0.5 uppercase">0 SLOT</span>
+                            </div>
+
+                            <div class="grid grid-cols-2 sm:grid-cols-5 gap-1.5 text-center">
+                                <button type="button" id="btn-slot-add" class="btn-brutal bg-white text-xs font-black py-1.5 px-1 hover:bg-gray-100">+ TAMBAH</button>
+                                <button type="button" id="btn-slot-duplicate" class="btn-brutal bg-white text-xs font-black py-1.5 px-1 hover:bg-gray-100">⧉ DUPLIKAT</button>
+                                <button type="button" id="btn-slot-match" class="btn-brutal bg-white text-xs font-black py-1.5 px-1 hover:bg-gray-100" title="Samakan ukuran semua slot dengan slot terpilih">⇔ SAMAKAN</button>
+                                <button type="button" id="btn-slot-delete" class="btn-brutal bg-white text-xs font-black py-1.5 px-1 text-red-600 hover:bg-red-50">✕ HAPUS</button>
+                                <button type="button" id="btn-slot-reset" class="btn-brutal bg-white text-xs font-black py-1.5 px-1 hover:bg-gray-100 col-span-2 sm:col-span-1">⟲ PRESET</button>
+                            </div>
+
+                            <div class="grid grid-cols-2 gap-2">
+                                <div>
+                                    <label class="block font-black uppercase text-[10px] text-gray-600 mb-1" for="slot-select">Slot Terpilih</label>
+                                    <select id="slot-select" class="w-full border-2 border-brutal p-1.5 font-bold text-xs bg-white"></select>
+                                </div>
+                                <div>
+                                    <label class="block font-black uppercase text-[10px] text-gray-600 mb-1" for="slot-shape">Bentuk Slot</label>
+                                    <select id="slot-shape" class="w-full border-2 border-brutal p-1.5 font-bold text-xs bg-white">
+                                        <option value="rect">Persegi</option>
+                                        <option value="ellipse">Elips / Lingkaran</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-4 gap-2">
+                                <div>
+                                    <label class="block font-black uppercase text-[10px] text-gray-600 mb-1" for="slot-x">X (%)</label>
+                                    <input id="slot-x" type="number" step="0.1" min="0" max="100" class="w-full border-2 border-brutal p-1.5 font-bold text-xs font-mono">
+                                </div>
+                                <div>
+                                    <label class="block font-black uppercase text-[10px] text-gray-600 mb-1" for="slot-y">Y (%)</label>
+                                    <input id="slot-y" type="number" step="0.1" min="0" max="100" class="w-full border-2 border-brutal p-1.5 font-bold text-xs font-mono">
+                                </div>
+                                <div>
+                                    <label class="block font-black uppercase text-[10px] text-gray-600 mb-1" for="slot-w">Lebar (%)</label>
+                                    <input id="slot-w" type="number" step="0.1" min="2" max="100" class="w-full border-2 border-brutal p-1.5 font-bold text-xs font-mono">
+                                </div>
+                                <div>
+                                    <label class="block font-black uppercase text-[10px] text-gray-600 mb-1" for="slot-h">Tinggi (%)</label>
+                                    <input id="slot-h" type="number" step="0.1" min="2" max="100" class="w-full border-2 border-brutal p-1.5 font-bold text-xs font-mono">
+                                </div>
+                            </div>
+
+                            <div class="flex flex-wrap items-center gap-4 text-xs font-black uppercase">
+                                <label class="flex items-center gap-1.5 cursor-pointer"><input id="slot-snap" type="checkbox" checked class="w-4 h-4"> Snap 0.5%</label>
+                                <label class="flex items-center gap-1.5 cursor-pointer"><input id="slot-lock-ratio" type="checkbox" class="w-4 h-4"> Kunci Rasio</label>
+                            </div>
+
+                            <p class="text-[10px] font-bold text-gray-500 leading-relaxed">
+                                Drag kotak biru untuk memindah • Tarik titik sudut untuk ubah ukuran • Tombol panah = geser 0.5% (Shift = 2%) • Delete = hapus slot.
+                            </p>
+                        </div>
+
+                        <div class="flex items-center gap-2 pt-1">
+                            <input id="frame-is-active" type="checkbox" checked class="w-4 h-4 border-brutal">
+                            <label for="frame-is-active" class="text-xs font-black uppercase">Langsung Aktifkan di Photobooth</label>
+                        </div>
                     </div>
-                </div>
 
-                <div class="flex items-center gap-2 pt-2">
-                    <input id="frame-is-active" type="checkbox" checked class="w-4 h-4 border-brutal">
-                    <label for="frame-is-active" class="text-xs font-black uppercase">Langsung Aktifkan di Photobooth</label>
+                    <!-- Sisi Kanan: Pratinjau Kanvas Interaktif (5 kolom) -->
+                    <div class="lg:col-span-5 flex flex-col items-center">
+                        <div class="border-brutal p-3 bg-brutalBg w-full flex flex-col items-center">
+                            <div class="w-full flex items-center justify-between mb-2">
+                                <span class="text-xs font-black uppercase text-gray-700">Pratinjau Komposisi</span>
+                                <span class="text-[10px] font-black bg-white border border-brutal px-2 py-0.5">1204 × 1795 px</span>
+                            </div>
+
+                            <!-- Interactive Preview Viewport -->
+                            <div id="frame-preview-box" class="relative w-56 sm:w-64 aspect-[2/3] bg-white border-4 border-brutalDark shadow-neo overflow-hidden flex items-center justify-center cursor-grab active:cursor-grabbing select-none" style="max-height: 380px;">
+                                <span id="frame-preview-placeholder" class="text-xs font-bold text-gray-400 text-center p-4">Pilih file gambar untuk melihat dan mengatur komposisi</span>
+                                
+                                <!-- Canvas Transformed Frame -->
+                                <canvas id="frame-preview-canvas" class="hidden absolute inset-0 w-full h-full pointer-events-none z-10"></canvas>
+                                
+                                <!-- Slot Photo Overlays -->
+                                <div id="frame-preview-slots" class="absolute inset-0 pointer-events-none z-20"></div>
+                            </div>
+
+                            <p class="text-[10px] font-bold text-gray-600 text-center mt-2.5">
+                                🟦 <strong>Drag kotak biru</strong> = pindah/ubah slot • 🖐️ <strong>Drag area kosong</strong> = geser frame • 🔍 <strong>Scroll</strong> = zoom frame
+                            </p>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="flex items-center justify-end gap-3 pt-4 border-t-2 border-brutal">

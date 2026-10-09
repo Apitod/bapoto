@@ -191,10 +191,11 @@ create policy "Public can view active frames"
     to anon, authenticated
     using (is_active = true);
 
--- Hanya Admin Authenticated yang dapat menambah/mengubah frame
+-- Admin Authenticated & Anon dapat menambah/mengubah frame
+drop policy if exists "Admin full access on frames" on public.frames;
 create policy "Admin full access on frames"
     on public.frames for all
-    to authenticated
+    to anon, authenticated
     using (true)
     with check (true);
 
@@ -263,8 +264,31 @@ create policy "Admin delete session-results"
     using (bucket_id = 'session-results');
 
 -- Public read for frames bucket
+drop policy if exists "Public read frames bucket" on storage.objects;
 create policy "Public read frames bucket"
     on storage.objects for select
+    to anon, authenticated
+    using (bucket_id = 'frames');
+
+-- Allow anon & authenticated upload to frames bucket
+drop policy if exists "Allow upload to frames bucket" on storage.objects;
+create policy "Allow upload to frames bucket"
+    on storage.objects for insert
+    to anon, authenticated
+    with check (bucket_id = 'frames');
+
+-- Allow update / upsert to frames bucket
+drop policy if exists "Allow update to frames bucket" on storage.objects;
+create policy "Allow update to frames bucket"
+    on storage.objects for update
+    to anon, authenticated
+    using (bucket_id = 'frames')
+    with check (bucket_id = 'frames');
+
+-- Allow delete from frames bucket
+drop policy if exists "Allow delete from frames bucket" on storage.objects;
+create policy "Allow delete from frames bucket"
+    on storage.objects for delete
     to anon, authenticated
     using (bucket_id = 'frames');
 

@@ -97,6 +97,12 @@ export async function createNewFrame({
         });
 
     if (uploadError) {
+        if (
+            uploadError.message?.toLowerCase().includes('row-level security') ||
+            uploadError.message?.toLowerCase().includes('policy')
+        ) {
+            throw new Error(`Kebijakan RLS Supabase memblokir upload ke bucket 'frames'. Silakan jalankan skrip SQL di file supabase/fix_frames_storage_rls.sql pada Supabase SQL Editor.`);
+        }
         throw new Error(`Gagal mengunggah gambar frame: ${uploadError.message}`);
     }
 

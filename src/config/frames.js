@@ -141,5 +141,115 @@ export const frameDatabase = [
             { x: 57.10, y: 51.50, w: 40.83, h: 34.32, shape: 'ellipse' },
             { x: 6.10, y: 60.50, w: 37.70, h: 25.29, shape: 'rect' }
         ]
+    },
+    {
+        id: 'frame-14',
+        name: 'FEB Gold Strip',
+        previewUrl: '/frames/14.png',
+        aspectRatio: { width: 1204, height: 1795 },
+        poseCount: 6,
+        gap: 0,
+        slots: [
+            // Kolom Kiri
+            { x: 3.0, y: 6.0,  w: 33.5, h: 26.5, shape: 'rect' },
+            { x: 3.0, y: 36.0, w: 33.5, h: 26.5, shape: 'rect' },
+            { x: 3.0, y: 65.5, w: 33.5, h: 22.0, shape: 'rect' },
+            // Kolom Kanan
+            { x: 53.5, y: 4.5,  w: 43.0, h: 26.5, shape: 'rect' },
+            { x: 53.5, y: 35.0, w: 43.0, h: 26.5, shape: 'rect' },
+            { x: 53.5, y: 64.5, w: 43.0, h: 23.5, shape: 'rect' }
+        ]
+    },
+    {
+        id: 'frame-15',
+        name: 'FEB Red Classic',
+        previewUrl: '/frames/15.png',
+        aspectRatio: { width: 1204, height: 1795 },
+        poseCount: 6,
+        gap: 0,
+        slots: [
+            // Kolom Kiri (header logo ~21% dari atas)
+            { x: 3.5, y: 22.0, w: 33.5, h: 22.5, shape: 'rect' },
+            { x: 3.5, y: 47.0, w: 33.5, h: 22.5, shape: 'rect' },
+            { x: 3.5, y: 72.0, w: 33.5, h: 19.5, shape: 'rect' },
+            // Kolom Kanan
+            { x: 53.5, y: 22.0, w: 43.0, h: 22.5, shape: 'rect' },
+            { x: 53.5, y: 47.0, w: 43.0, h: 22.5, shape: 'rect' },
+            { x: 53.5, y: 72.0, w: 43.0, h: 19.5, shape: 'rect' }
+        ]
+    },
+    {
+        id: 'frame-16',
+        name: 'FEB Lime Twist',
+        previewUrl: '/frames/16.png',
+        aspectRatio: { width: 1204, height: 1795 },
+        poseCount: 6,
+        gap: 0,
+        slots: [
+            // Kolom Kiri (1 foto besar per row)
+            { x: 3.0, y: 5.0,  w: 33.5, h: 27.0, shape: 'rect' },
+            { x: 3.0, y: 35.5, w: 33.5, h: 27.0, shape: 'rect' },
+            { x: 3.0, y: 65.5, w: 33.5, h: 27.0, shape: 'rect' },
+            // Kolom Kanan (3 foto berbeda ukuran)
+            { x: 53.5, y: 3.5,  w: 43.5, h: 22.0, shape: 'rect' },
+            { x: 53.5, y: 33.0, w: 43.5, h: 27.5, shape: 'rect' },
+            { x: 53.5, y: 62.5, w: 43.5, h: 27.5, shape: 'rect' }
+        ]
+    },
+    {
+        id: 'frame-17',
+        name: 'FEB Ticket Stub',
+        previewUrl: '/frames/17.png',
+        aspectRatio: { width: 1204, height: 1795 },
+        poseCount: 6,
+        gap: 0,
+        slots: [
+            // Kolom Kiri (area foto di tengah, header atas ~20%, barcode bawah ~15%)
+            { x: 2.5, y: 22.5, w: 31.5, h: 21.0, shape: 'rect' },
+            { x: 2.5, y: 45.5, w: 31.5, h: 22.0, shape: 'rect' },
+            { x: 2.5, y: 69.5, w: 31.5, h: 22.0, shape: 'rect' },
+            // Kolom Kanan
+            { x: 43.0, y: 22.5, w: 55.0, h: 21.0, shape: 'rect' },
+            { x: 43.0, y: 45.5, w: 55.0, h: 22.0, shape: 'rect' },
+            { x: 43.0, y: 69.5, w: 55.0, h: 22.0, shape: 'rect' }
+        ]
+    },
+    {
+        id: 'frame-18',
+        name: 'Dies Feb Stamp',
+        previewUrl: '/frames/18.png',
+        aspectRatio: { width: 1204, height: 1795 },
+        poseCount: 8,
+        gap: 0,
+        slots: [
+            // Kolom Kiri - 4 foto (header "Dies Feb" ~22%, footer bintang ~18%)
+            { x: 4.5, y: 22.5, w: 27.5, h: 16.5, shape: 'rect' },
+            { x: 4.5, y: 40.5, w: 27.5, h: 15.5, shape: 'rect' },
+            { x: 4.5, y: 57.5, w: 27.5, h: 15.5, shape: 'rect' },
+            { x: 4.5, y: 74.0, w: 27.5, h: 8.0,  shape: 'rect' },
+            // Kolom Kanan - 4 foto
+            { x: 54.0, y: 22.5, w: 43.0, h: 16.5, shape: 'rect' },
+            { x: 54.0, y: 40.5, w: 43.0, h: 15.5, shape: 'rect' },
+            { x: 54.0, y: 57.5, w: 43.0, h: 15.5, shape: 'rect' },
+            { x: 54.0, y: 74.0, w: 43.0, h: 8.0,  shape: 'rect' }
+        ]
+    },
+    {
+        id: 'frame-19',
+        name: 'Black Heart Punk',
+        previewUrl: '/frames/19.png',
+        aspectRatio: { width: 1204, height: 1795 },
+        poseCount: 6,
+        gap: 0,
+        slots: [
+            // Kolom Kiri - 3 hati (ellipse vertikal)
+            { x: 2.0,  y: 2.5,  w: 41.0, h: 27.5, shape: 'ellipse' },
+            { x: 2.0,  y: 34.5, w: 41.0, h: 27.5, shape: 'ellipse' },
+            { x: 2.0,  y: 66.5, w: 41.0, h: 27.5, shape: 'ellipse' },
+            // Kolom Kanan - 3 persegi (strip foto hitam)
+            { x: 52.0, y: 4.5,  w: 46.0, h: 27.0, shape: 'rect' },
+            { x: 52.0, y: 35.0, w: 46.0, h: 26.5, shape: 'rect' },
+            { x: 52.0, y: 64.5, w: 46.0, h: 26.5, shape: 'rect' }
+        ]
     }
 ];
