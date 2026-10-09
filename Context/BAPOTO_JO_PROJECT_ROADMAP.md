@@ -277,12 +277,14 @@ Bucket privat saja belum cukup; kebijakan aksesnya juga harus benar.
 
 ### Tahap 7 — Deploy dan UAT [TAHAP SAAT INI / SELANJUTNYA 🚀]
 - [ ] Push repository ke GitHub.
-- [ ] Deploy frontend ke Netlify (konfigurasi `netlify.toml` sudah siap).
-- [ ] Set environment variables di Netlify (`VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`).
+- [ ] Deploy frontend ke **Vercel** (atau Netlify):
+  - Konfigurasi `vercel.json` dan `netlify.toml` sudah disiapkan.
+  - Multi-page routing (`/`, `/admin`, `/download`) otomatis terhubung ke `dist/`.
+- [ ] Set environment variables di platform deployment (`VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`).
 - [ ] Eksekusi UAT live pada perangkat komputer photobooth dan tablet operator sebenarnya.
 - [ ] Pengujian kamera fisik, printer fisik, dan scan QR dari berbagai jenis ponsel.
 
-**Hasil:** Aplikasi live di production dan siap operasional komersial.
+**Hasil:** Aplikasi live di production (Vercel / Netlify) dan siap operasional komersial.
 
 ## 12. Kriteria Penerimaan
 
