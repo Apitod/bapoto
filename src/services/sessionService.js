@@ -226,11 +226,32 @@ export async function getSessionByDownloadToken(token) {
         }
 
         // 1. Buat Signed URL berumur 30 menit (1800 detik) untuk foto utama
-        const { data: signedData, error: signError } = await supabase.storage
-            .from(STORAGE_BUCKET)
-            .createSignedUrl(data.result_path, 1800);
+        let fileUrl = null;
+        try {
+            const { data: signedData, error: signError } = await supabase.storage
+                .from(STORAGE_BUCKET)
+                .createSignedUrl(data.result_path, 1800);
 
-        if (signError || !signedData?.signedUrl) {
+            if (!signError && signedData?.signedUrl) {
+                fileUrl = signedData.signedUrl;
+            } else if (signError) {
+                console.warn('[SessionService] createSignedUrl utama gagal, mencoba publicUrl:', signError);
+            }
+        } catch (signErr) {
+            console.warn('[SessionService] Exception createSignedUrl:', signErr);
+        }
+
+        // Fallback jika signed URL gagal (misal bucket public atau RLS signed URL dibatasi)
+        if (!fileUrl && data.result_path) {
+            const { data: pubData } = supabase.storage
+                .from(STORAGE_BUCKET)
+                .getPublicUrl(data.result_path);
+            if (pubData?.publicUrl) {
+                fileUrl = pubData.publicUrl;
+            }
+        }
+
+        if (!fileUrl) {
             throw new Error('Gagal membuat tautan unduhan aman untuk foto utama.');
         }
 
@@ -277,12 +298,28 @@ export async function getSessionByDownloadToken(token) {
             } catch (singleErr) {
                 console.warn('Gagal membuat signed URL untuk foto satuan:', singleErr);
             }
+
+            // Fallback: Jika batchSigned gagal atau kosong, coba getPublicUrl untuk tiap file
+            if (singlePhotos.length === 0) {
+                rawPaths.forEach((path, idx) => {
+                    const { data: pubData } = supabase.storage
+                        .from(STORAGE_BUCKET)
+                        .getPublicUrl(path);
+                    if (pubData?.publicUrl) {
+                        singlePhotos.push({
+                            index: idx + 1,
+                            path: path,
+                            url: pubData.publicUrl
+                        });
+                    }
+                });
+            }
         }
 
         return {
             valid: true,
             session: data,
-            fileUrl: signedData.signedUrl,
+            fileUrl,
             singlePhotos
         };
     } catch (err) {

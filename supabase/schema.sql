@@ -249,10 +249,11 @@ create policy "Allow anon upload to session-results"
     to anon, authenticated
     with check (bucket_id = 'session-results');
 
--- Allow authenticated (admin) read all from session-results
-create policy "Admin read session-results"
+-- Allow anon & authenticated read from session-results (agar pelanggan yang scan QR dapat melihat/mengunduh foto hasil)
+drop policy if exists "Allow anon read session-results" on storage.objects;
+create policy "Allow anon read session-results"
     on storage.objects for select
-    to authenticated
+    to anon, authenticated
     using (bucket_id = 'session-results');
 
 -- Allow authenticated (admin) delete session-results
