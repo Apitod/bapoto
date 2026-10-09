@@ -1,0 +1,1273 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>bapoto.jo — The Next Gen Photobooth</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brutalPink: '#FF2A7A',
+                        brutalYellow: '#FFD700',
+                        brutalBlue: '#0055FF',
+                        brutalGreen: '#00E676',
+                        brutalBg: '#F4F4F0',
+                        brutalDark: '#111111'
+                    },
+                    boxShadow: {
+                        'neo': '4px 4px 0px #111111',
+                        'neo-lg': '8px 8px 0px #111111',
+                        'neo-hover': '2px 2px 0px #111111',
+                        'neo-active': '0px 0px 0px #111111'
+                    },
+                    fontFamily: {
+                        'sans': ['"Space Grotesk"', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+
+    <script src="https://unpkg.com/gifshot@0.4.5/dist/gifshot.js"></script>
+
+    <script>
+    if (typeof gifshot === 'undefined') {
+        document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/gifshot/0.4.5/gifshot.min.js"><\/script>');
+        }
+    </script>
+
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700;900&display=swap" rel="stylesheet">
+    <style>
+        body {
+            background-color: #F4F4F0;
+            color: #111111;
+            overflow-x: hidden;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        /* Dot Grid Patterns */
+        .bg-grid-light {
+            background-size: 24px 24px;
+            background-image: radial-gradient(circle, #111111 2px, rgba(0, 0, 0, 0) 1px);
+        }
+        .bg-grid-pink {
+            background-color: #FF2A7A;
+            background-size: 24px 24px;
+            background-image: radial-gradient(circle, #111111 2.5px, rgba(0, 0, 0, 0) 1px);
+        }
+
+        /* Neo Brutalism Core Styles */
+        .border-brutal {
+            border: 4px solid #111111;
+        }
+
+        .btn-brutal {
+            border: 4px solid #111111;
+            box-shadow: 6px 6px 0px #111111;
+            transition: all 0.1s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+        }
+        
+        .btn-brutal:hover {
+            transform: translate(2px, 2px);
+            box-shadow: 4px 4px 0px #111111;
+        }
+        
+        .btn-brutal:active {
+            transform: translate(6px, 6px);
+            box-shadow: 0px 0px 0px #111111;
+        }
+
+        .card-brutal {
+            border: 4px solid #111111;
+            box-shadow: 8px 8px 0px #111111;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .card-brutal:hover {
+            transform: translate(-4px, -4px);
+            box-shadow: 12px 12px 0px #111111;
+        }
+
+        /* 3D Animations */
+        @keyframes float3D {
+            0% { transform: perspective(1000px) rotateY(-10deg) rotateX(5deg) translateY(0px); }
+            50% { transform: perspective(1000px) rotateY(-5deg) rotateX(2deg) translateY(-15px); }
+            100% { transform: perspective(1000px) rotateY(-10deg) rotateX(5deg) translateY(0px); }
+        }
+        .animate-float {
+            animation: float3D 6s ease-in-out infinite;
+            transform-style: preserve-3d;
+        }
+
+        @keyframes countZoom {
+            0% { transform: scale(0.3); opacity: 0; }
+            50% { transform: scale(1.2); opacity: 1; }
+            100% { transform: scale(1); opacity: 0; }
+        }
+        .animate-countdown {
+            animation: countZoom 1s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+
+        /* Utilities */
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        
+        .step-section {
+            display: none;
+            opacity: 0;
+            transition: opacity 0.3s ease-in-out;
+        }
+        .step-section.active {
+            display: flex;
+            opacity: 1;
+        }
+
+        /* Hover Effect for Frame Cards */
+        .frame-card-hover {
+            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.3s ease;
+        }
+        .frame-card-hover:hover {
+            transform: perspective(1000px) rotateX(4deg) rotateY(-4deg) translateY(-6px);
+            box-shadow: 12px 12px 0px #111111;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col font-sans select-none">
+
+    <header class="w-full bg-white border-brutal border-t-0 border-x-0 z-50 sticky top-0 h-16 sm:h-20 flex items-center justify-between px-4 sm:px-8">
+        <button onclick="navToStep(1)" class="flex items-center gap-2 group">
+            <span class="w-6 h-6 rounded-full bg-brutalPink border-brutal inline-block group-hover:scale-110 transition-transform"></span>
+            <span class="font-black text-2xl sm:text-3xl tracking-tighter uppercase">bapoto.jo</span>
+        </button>
+        <nav class="flex items-center gap-4 sm:gap-8">
+            <button onclick="navToStep(1)" class="font-bold text-sm sm:text-lg hover:text-brutalPink transition-colors">HOME</button>
+            <button onclick="alertToast('Gallery is under construction!')" class="font-bold text-sm sm:text-lg hover:text-brutalBlue transition-colors hidden sm:block">GALLERY</button>
+            <button class="btn-brutal bg-brutalDark text-white px-5 py-2 font-bold text-sm sm:text-base">LOGIN</button>
+        </nav>
+    </header>
+
+    <main class="flex-grow relative flex flex-col w-full h-[calc(100vh-4rem)] sm:h-[calc(100vh-5rem)]">
+        
+        <section id="step-1" class="step-section active flex-col lg:flex-row w-full h-full">
+            <!-- Left: Graphic Zone -->
+            <div class="w-full lg:w-1/2 bg-grid-pink border-b-4 lg:border-b-0 lg:border-r-4 border-[#111111] p-8 flex items-center justify-center relative overflow-hidden h-1/2 lg:h-full">
+                <!-- Decorative Shapes -->
+                <div class="absolute -bottom-10 -left-10 w-48 h-48 bg-brutalYellow rounded-full border-brutal"></div>
+                <div class="absolute top-10 right-10 w-32 h-32 bg-brutalBlue border-brutal rotate-12"></div>
+                
+                <!-- Floating Preview Strip -->
+                <div class="animate-float z-10 relative bg-white border-brutal p-4 w-48 sm:w-64 flex flex-col gap-3 shadow-neo-lg rotate-[-5deg]">
+                    <div class="w-full aspect-square bg-gray-200 border-2 border-brutalDark flex items-center justify-center">
+                        <svg class="w-10 h-10 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    </div>
+                    <div class="w-full aspect-square bg-gray-200 border-2 border-brutalDark flex items-center justify-center">
+                        <svg class="w-10 h-10 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                    </div>
+                    <div class="text-center font-black text-xl tracking-widest mt-2 uppercase">bapoto.jo</div>
+                </div>
+            </div>
+
+            <!-- Right: Content Zone -->
+            <div class="w-full lg:w-1/2 bg-white flex flex-col justify-center items-start p-8 sm:p-16 h-1/2 lg:h-full">
+                <div class="inline-block bg-brutalBlue text-white px-4 py-1 font-bold text-sm tracking-widest border-brutal -rotate-2 mb-6">
+                    THE NEXT GEN PHOTOBOOTH
+                </div>
+                <h1 class="font-black text-6xl sm:text-7xl lg:text-8xl leading-[0.9] tracking-tighter mb-6 uppercase">
+                    Capture<br>Your Art.
+                </h1>
+                <p class="text-lg sm:text-xl font-medium mb-10 max-w-md">
+                    Abadikan momen lo dengan gaya yang beda. Simple, artistik, dan langsung jadi kenangan aesthetic.
+                </p>
+                <button onclick="navToStep(2)" class="btn-brutal bg-brutalPink text-white font-black text-2xl px-10 py-5 flex items-center gap-4 w-full sm:w-auto justify-center">
+                    <span>START SESSION</span>
+                    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+                </button>
+            </div>
+        </section>
+
+        <section id="step-2" class="step-section flex-col items-center justify-center w-full h-full bg-grid-light p-4 overflow-y-auto">
+            <div class="max-w-md w-full bg-white border-brutal shadow-neo-lg flex flex-col">
+                <div class="bg-brutalBlue text-white font-black text-center py-4 border-b-4 border-brutal text-xl">
+                    PEMBAYARAN QRIS
+                </div>
+                <div class="p-6 flex flex-col items-center">
+                    <p class="font-bold text-center mb-4 text-lg">Scan QRIS di bawah untuk melakukan pembayaran sesi photobooth Anda.</p>
+                    
+                    <!-- QRIS Image Container -->
+                    <div class="border-brutal p-2 bg-white mb-6 w-full max-w-[280px]">
+                        <img src="assets/qris-bapotojo.jpeg" alt="QRIS BAPOTO.JO" class="w-full h-auto object-contain border-2 border-dashed border-gray-300">
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4 w-full">
+                        <button onclick="navToStep(1)" class="btn-brutal bg-white text-brutalDark font-bold py-3 text-sm sm:text-base flex justify-center items-center gap-1">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+                            KEMBALI
+                        </button>
+                        <button onclick="navToStep('2b')" class="btn-brutal bg-brutalYellow text-brutalDark font-black py-3 text-sm sm:text-base flex justify-center items-center gap-1">
+                            SAYA SUDAH BAYAR
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="step-2b" class="step-section flex-col items-center justify-center w-full h-full bg-grid-light p-4 overflow-y-auto">
+            <h2 class="inline-block bg-white font-black text-3xl sm:text-4xl px-6 py-3 border-brutal shadow-neo uppercase -rotate-1 mb-8">
+                PILIH FORMAT
+            </h2>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 sm:gap-8 w-full max-w-3xl">
+                <button onclick="selectFormat('photo')" class="card-brutal bg-brutalYellow p-6 flex flex-col items-center gap-3 text-center">
+                    <span class="text-6xl">📸</span>
+                    <span class="font-black text-2xl uppercase">Photo Strip</span>
+                    <span class="font-bold text-sm">Foto statis, hasil PNG</span>
+                </button>
+                <button onclick="selectFormat('gif')" class="card-brutal bg-brutalPink text-white p-6 flex flex-col items-center gap-3 text-center">
+                    <span class="text-6xl">🎞️</span>
+                    <span class="font-black text-2xl uppercase">Animated GIF</span>
+                    <span class="font-bold text-sm">Rekam 7 detik, hasil GIF</span>
+                </button>
+            </div>
+            <button onclick="navToStep(2)" class="btn-brutal bg-white px-8 py-3 font-black mt-10">KEMBALI</button>
+        </section>
+
+        <section id="step-3" class="step-section flex-col items-center w-full h-full bg-grid-light p-4 sm:p-8 overflow-y-auto">
+            <div class="text-center mb-8 mt-4 relative">
+                <h2 class="inline-block bg-white font-black text-4xl sm:text-5xl px-8 py-3 border-brutal shadow-neo uppercase -rotate-1 relative z-10">
+                    PICK YOUR FRAME
+                </h2>
+                <div class="absolute inset-0 bg-brutalGreen border-brutal translate-x-2 translate-y-2 z-0"></div>
+                <p class="font-bold text-lg mt-6 bg-white inline-block px-4 py-1 border-brutal shadow-neo-hover">Pilih frame & layout otomatis</p>
+            </div>
+
+            <!-- Dynamic Frame Grid -->
+            <div id="frame-catalog" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 sm:gap-8 w-full max-w-7xl pb-20">
+                <!-- Injected via JS -->
+            </div>
+
+            <!-- Back Button Fixed Bottom -->
+            <div class="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-20">
+                 <button onclick="navToStep('2b')" class="btn-brutal bg-white px-8 py-3 font-black flex items-center gap-2">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+                    KEMBALI
+                </button>
+            </div>
+        </section>
+
+        <section id="step-4" class="step-section flex-col w-full h-full bg-[#111111] relative overflow-hidden">
+            
+            <!-- Header Camera -->
+            <div class="absolute top-0 left-0 w-full p-4 sm:p-6 flex justify-between items-center z-20">
+                <button onclick="stopCameraAndReturn()" class="btn-brutal bg-white p-2 sm:p-3 rounded-full hover:bg-gray-200">
+                    <svg class="w-6 h-6 sm:w-8 sm:h-8 text-brutalDark" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+                </button>
+                <div class="bg-brutalPink border-brutal text-white font-black text-xl sm:text-2xl px-6 py-2 shadow-neo">
+                    <span id="pose-counter">0/0</span>
+                </div>
+            </div>
+
+            <!-- Viewfinder Area -->
+            <div class="flex-grow flex items-center justify-center p-4 pt-20 pb-32">
+                <div class="relative w-full max-w-3xl aspect-[4/3] sm:aspect-[16/9] border-brutal border-[6px] bg-black shadow-[0_0_50px_rgba(255,42,122,0.3)] overflow-hidden rounded-2xl">
+                    <video id="webcam" autoplay playsinline class="w-full h-full object-cover transform scale-x-[-1]"></video>
+                    
+                    <!-- Overlays -->
+                    <div id="countdown-overlay" class="absolute inset-0 flex items-center justify-center hidden z-30 pointer-events-none">
+                        <span id="countdown-text" class="text-[150px] sm:text-[250px] font-black text-brutalYellow drop-shadow-[8px_8px_0_#111111]"></span>
+                    </div>
+                    <div id="flash-overlay" class="absolute inset-0 bg-white opacity-0 transition-opacity duration-100 z-40 pointer-events-none"></div>
+                    <div id="rec-badge" class="hidden absolute top-4 left-4 z-30 bg-brutalPink text-white font-black px-3 py-1 border-brutal shadow-neo">
+                    ● REC <span id="rec-timer">0</span>s
+                </div>
+                </div>
+            </div>
+
+            <!-- Bottom Controls -->
+           <div class="absolute bottom-6 sm:bottom-10 left-0 w-full flex justify-center items-center gap-6 sm:gap-10 z-20">
+
+            <!-- Mirror Toggle -->
+            <button onclick="toggleMirror()" class="btn-brutal bg-brutalYellow p-4 rounded-full" title="Mirror Camera">
+                <svg class="w-8 h-8 text-brutalDark" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path></svg>
+            </button>
+
+            <!-- Capture Button + Ring -->
+            <div class="relative flex items-center justify-center shrink-0">
+                <svg id="gif-ring" class="hidden absolute pointer-events-none -rotate-90" viewBox="0 0 100 100"
+                     style="inset:-14px;width:calc(100% + 28px);height:calc(100% + 28px)">
+                    <circle cx="50" cy="50" r="46" fill="none" stroke="#ffffff" stroke-opacity="0.3" stroke-width="6"/>
+                    <circle id="gif-ring-progress" cx="50" cy="50" r="46" fill="none" stroke="#FF2A7A" stroke-width="6"
+                            stroke-linecap="round" stroke-dasharray="289.03" stroke-dashoffset="289.03"/>
+                </svg>
+
+                <button id="btn-capture" onclick="startCapture()" class="btn-brutal bg-white p-6 rounded-full border-[6px] shadow-neo-lg hover:scale-105 active:scale-95 transition-transform" title="Take Photo">
+                    <svg class="w-12 h-12 text-brutalDark" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h0.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                </button>
+            </div>
+
+            <!-- Switch Camera -->
+            <button onclick="switchCamera()" class="btn-brutal bg-gray-300 p-4 rounded-full" title="Switch Camera">
+                <svg class="w-8 h-8 text-brutalDark" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+            </button>
+        </div>
+        </section>
+
+        <section id="step-5" class="step-section flex-col lg:flex-row w-full h-full bg-grid-light">
+            <!-- Left: Result Preview -->
+            <div class="w-full lg:w-2/3 h-1/2 lg:h-full p-4 sm:p-8 flex items-center justify-center border-b-4 lg:border-b-0 lg:border-r-4 border-brutalDark overflow-y-auto bg-brutalBg">
+                <div class="relative w-full max-w-md bg-white border-brutal p-4 shadow-neo-lg flex justify-center items-center min-h-[300px]">
+                    <div id="rendering-loader" class="absolute inset-0 bg-white/80 z-10 flex flex-col items-center justify-center font-bold text-xl">
+                        <svg class="w-10 h-10 animate-spin mb-2" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                        Rendering Magic...
+                    </div>
+                    <!-- Final Canvas (Responsive) -->
+                    <canvas id="final-canvas" class="max-w-full max-h-full object-contain border-2 border-brutalDark opacity-0 transition-opacity duration-300"></canvas>
+
+                    <img id="final-gif" alt="Hasil GIF" class="hidden max-w-full max-h-full object-contain border-2 border-brutalDark opacity-0 transition-opacity duration-300">
+                </div>
+            </div>
+
+            <!-- Right: Filter & Actions Sidebar -->
+            <div class="w-full lg:w-1/3 h-1/2 lg:h-full bg-white p-6 sm:p-10 flex flex-col border-brutalDark">
+                <div class="mb-6">
+                    <h2 class="font-black text-4xl sm:text-5xl uppercase tracking-tighter mb-2">FINALIZE</h2>
+                    <p class="font-bold text-gray-500 uppercase tracking-widest text-sm">Pilih Filter Efek</p>
+                </div>
+
+                <!-- Filter List -->
+                <div id="filter-container" class="flex-grow overflow-y-auto grid grid-cols-2 gap-3 pr-2 mb-6 hide-scrollbar content-start">
+                    <!-- Filters injected via JS -->
+                </div>
+
+                <!-- Actions -->
+                <div class="grid grid-cols-2 gap-4 mt-auto pt-6 border-t-4 border-brutalDark">
+                    <button onclick="navToStep(3)" class="btn-brutal bg-white py-4 font-black flex justify-center items-center gap-2">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                        ULANG
+                    </button>
+                    <button id="btn-save-photo" onclick="downloadPhoto()" class="btn-brutal bg-brutalGreen text-brutalDark py-4 font-black flex justify-center items-center gap-2">
+                        SIMPAN
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                    </button>
+                    <button id="btn-save-gif" onclick="downloadGif()" class="hidden btn-brutal bg-brutalGreen text-brutalDark py-4 font-black flex justify-center items-center gap-2">
+                        SIMPAN GIF
+                    </button>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Hidden Canvas for Offscreen processing -->
+    <canvas id="capture-canvas" class="hidden"></canvas>
+
+    <!-- Global Toast Notifier -->
+    <div id="toast" class="fixed top-20 right-4 bg-brutalDark text-white font-bold px-6 py-4 border-brutal shadow-neo z-[100] transform translate-x-[150%] transition-transform duration-300 flex items-center gap-3">
+        <svg class="w-6 h-6 text-brutalYellow" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+        <span id="toast-msg">Message</span>
+    </div>
+
+    <script>
+        /** 
+         * DATA DEFINITIONS 
+         * Defining frames with precise relative bounding boxes (in percentages 0-100)
+         * to allow drawing photos into the correct slots accurately.
+         */
+        const frameDatabase = [
+   {
+        id: 'frame-1',
+        name: 'Classic Strip',
+        previewUrl: 'frames/frame1.png',
+        aspectRatio: { width: 1205, height: 1795 },
+        poseCount: 6,
+        slots: [
+            { x: 5.49, y: 3.18, w: 40.75, h: 24.01, shape: 'rect' },
+            { x: 53.94, y: 3.18, w: 40.75, h: 24.01, shape: 'rect' },
+
+            { x: 5.49, y: 31.12, w: 40.75, h: 24.01, shape: 'rect' },
+            { x: 53.94, y: 31.12, w: 40.75, h: 24.01, shape: 'rect' },
+
+            { x: 5.49, y: 58.77, w: 40.75, h: 24.01, shape: 'rect' },
+            { x: 53.94, y: 58.77, w: 40.75, h: 24.01, shape: 'rect' }
+        ]
+    },
+    {
+        id: 'frame-2',
+        name: 'Polka Retro',
+        previewUrl: 'frames/frame2.png',
+        aspectRatio: { width: 1204, height: 1795 },
+        poseCount: 6,
+        slots: [
+            // KIRI (Elips) - Digeser ke kanan sedikit dan agak turun
+            { x: 9.55, y: 10.65, w: 30.73, h: 28.13, shape: 'ellipse' },
+            { x: 9.55, y: 40.84, w: 30.73, h: 28.13, shape: 'ellipse' },
+            { x: 9.55, y: 70.10, w: 30.73, h: 28.13, shape: 'ellipse' },
+                    
+            // KANAN (Persegi) - Digeser lebih ke kanan dan mulai lebih bawah
+            { x: 58.72, y: 13.48, w: 34.22, h: 22.40, shape: 'rect' },
+            { x: 58.72, y: 43.12, w: 34.22, h: 22.40, shape: 'rect' },
+            { x: 58.72, y: 72.92, w: 34.22, h: 22.40, shape: 'rect' }
+        ]
+    },
+    {
+        id: 'frame-3',
+        name: 'Vintage Line',
+        previewUrl: 'frames/frame3.png',
+        aspectRatio: { width: 1204, height: 1795 },
+        poseCount: 5,
+        slots: [
+            { x: 9, y: 4.96, w: 34.50, h: 23.12, shape: 'rect' },
+            { x: 56.23, y: 8.20, w: 37.54, h: 31.60, shape: 'ellipse' },
+            { x: 9, y: 32.14, w: 34.88, h: 23.12, shape: 'rect' },
+            { x: 56.23, y: 48.25, w: 37.54, h: 31.60, shape: 'ellipse' },
+            { x: 9, y: 59.11, w: 34.88, h: 23.12, shape: 'rect' }
+        ]
+    },
+    {
+        id: 'frame-4',
+        name: 'Pink Ribbon',
+        previewUrl: 'frames/frame4.png',
+        aspectRatio: { width: 1204, height: 1795 },
+        poseCount: 5,
+        slots: [
+            { x: 6.06, y: 13.10, w: 39.30, h: 21.23, shape: 'rect' },
+            { x: 60, y: 16.70, w: 30, h: 25, shape: 'ellipse' },
+            { x: 6.06, y: 39.33, w: 39.40, h: 21.30, shape: 'rect' },
+            { x: 60, y: 58.74, w: 30, h: 25, shape: 'ellipse' },
+            { x: 6.69, y: 65.74, w: 39.40, h: 21.30, shape: 'rect' }
+        ]
+    },
+    {
+        id: 'frame-5',
+        name: 'Sunday Morning',
+        previewUrl: 'frames/frame5.png',
+        aspectRatio: { width: 1204, height: 1795 },
+        poseCount: 6,
+        slots: [
+            { x: 7.14, y: 11.03, w: 36.21, h: 19.40, shape: 'rect' },
+            { x: 57.14, y: 20.72, w: 36.21, h: 19.50, shape: 'rect' },
+            { x: 7.14, y: 33.42, w: 36.21, h: 19.50, shape: 'rect' },
+            { x: 57.14, y: 46.23, w: 36.21, h: 19.50, shape: 'rect' },
+            { x: 7.14, y: 56.00, w: 36.21, h: 19.50, shape: 'rect' },
+            { x: 57.14, y: 71.60, w: 36.21, h: 19.50, shape: 'rect' }
+        ]
+    },
+    {
+        id: 'frame-6',
+        name: 'Script Grid',
+        previewUrl: 'frames/frame6.png',
+        aspectRatio: { width: 1204, height: 1795 },
+        poseCount: 4,
+        slots: [
+            { x: 6.14, y: 24.70, w: 39.50, h: 22.60, shape: 'rect' },
+            { x: 53.90, y: 24.70, w: 39.70, h: 22.60, shape: 'rect' },
+            { x: 6.14, y: 52.40, w: 39.50, h: 22.60, shape: 'rect' },
+            { x: 54.40, y: 52.40, w: 39.90, h: 22.62, shape: 'rect' }
+        ]
+    },
+    {
+        id: 'frame-7',
+        name: 'Brown Leopard',
+        previewUrl: 'frames/frame7.png',
+        aspectRatio: { width: 1205, height: 1795 },
+        poseCount: 8,
+        slots: [
+            { x: 8.71, y: 5.80, w: 34.02, h: 18.94, shape: 'rect' },
+            { x: 59.70, y: 7.07, w: 33.44, h: 18.21, shape: 'rect' },
+            { x: 8.71, y: 26.01, w: 34.02, h: 18.94, shape: 'rect' },
+            { x: 59.70, y: 27.07, w: 33.44, h: 18.21, shape: 'rect' },
+            { x: 8.71, y: 46.23, w: 34.02, h: 18.94, shape: 'rect' },
+            { x: 59.70, y: 46.60, w: 33.52, h: 18.21, shape: 'rect' },
+            { x: 8.71, y: 66.50, w: 34.02, h: 18.94, shape: 'rect' },
+            { x: 59.70, y: 66.40, w: 33.44, h: 18.40, shape: 'rect' }
+        ]
+    },
+    {
+        id: 'frame-8',
+        name: 'Morning Miles',
+        previewUrl: 'frames/frame8.png',
+        aspectRatio: { width: 1205, height: 1795 },
+        poseCount: 5,
+        slots: [
+            { x: 6.10, y: 4.20, w: 37.70, h: 25.34, shape: 'rect' },
+            { x: 57.10, y: 12.31, w: 40.83, h: 34.32, shape: 'ellipse' },
+            { x: 6.10, y: 32.31, w: 37.70, h: 25.34, shape: 'rect' },
+            { x: 57.10, y: 51.50, w: 40.83, h: 34.32, shape: 'ellipse' },
+            { x: 6.10, y: 60.50, w: 37.70, h: 25.29, shape: 'rect' }
+        ]
+    }
+];
+
+        const FILTERS = [
+            { id: 'normal', name: 'Normal', css: 'none' },
+            { id: 'bw-classic', name: 'BW Classic', css: 'grayscale(100%)' },
+            { id: 'bw-noir', name: 'BW Noir', css: 'grayscale(100%) contrast(150%) brightness(90%)' },
+            { id: 'vintage', name: 'Vintage', css: 'sepia(60%) contrast(110%) brightness(90%)' },
+            { id: 'warm-glow', name: 'Warm Glow', css: 'saturate(150%) sepia(30%)' },
+            { id: 'cool-breeze', name: 'Cool Breeze', css: 'hue-rotate(30deg) saturate(120%) brightness(110%)' },
+            { id: 'dramatic', name: 'Dramatic', css: 'contrast(160%) saturate(120%)' },
+            { id: 'retro-pop', name: 'Retro Pop', css: 'saturate(200%) contrast(130%)' }
+        ];
+
+        // APP STATE
+        const state = {
+            currentStep: 1,
+            selectedFrame: null,
+            capturedPhotos: [],
+            isMirrored: true,
+            facingMode: 'user',
+            stream: null,
+            selectedFilter: 'normal',
+            // BARU
+            selectedFormat: 'photo',
+            gifFrames: [],
+            gifUrl: null,
+            recordId: 0,
+            renderToken: 0,
+            renderTimer: null
+        };
+
+        // UTILITY ASYNC IMAGE LOADER (MENCEGAH CANVAS BLANK)
+        function loadImage(src) {
+    return new Promise((resolve, reject) => {
+        const img = new Image();
+
+        img.onload = () => {
+            console.log('Berhasil memuat:', src);
+            resolve(img);
+        };
+
+        img.onerror = () => {
+            console.error('Gagal memuat:', src);
+            reject(new Error(`File tidak ditemukan: ${src}`));
+        };
+
+        img.src = src;
+    });
+}
+        const imageCache = new Map();
+
+        function loadImageCached(src) {
+            if (!imageCache.has(src)) {
+                imageCache.set(src, loadImage(src));
+            }
+
+            return imageCache.get(src);
+        }
+
+        /// LOGIKA RENDER FOTO "OBJECT-FIT: COVER" UNTUK CANVAS (REVISI AUTO-FIT PRESISI)
+        function drawImageCover(ctx, img, x, y, w, h) {
+            // 1. Hitung skala yang dibutuhkan agar gambar menutupi seluruh slot
+            const scale = Math.max(w / img.width, h / img.height);
+            
+            // 2. Hitung ukuran gambar baru setelah diskala
+            const scaledWidth = img.width * scale;
+            const scaledHeight = img.height * scale;
+            
+            // 3. Hitung posisi X dan Y agar wajah otomatis berada di tengah (Center Crop)
+            const dx = x + (w - scaledWidth) / 2;
+            const dy = y + (h - scaledHeight) / 2;
+            
+            // 4. Proses Masking & Render
+            ctx.save();
+            ctx.beginPath();
+            ctx.rect(x, y, w, h); // Buat batasan area slot
+            ctx.clip();           // Potong gambar yang bocor keluar slot
+            
+            // Gambar jepretan kamera ke canvas
+            ctx.drawImage(img, dx, dy, scaledWidth, scaledHeight);
+            
+            ctx.restore();
+        }
+
+        function navToStep(step) {
+            document.querySelectorAll('.step-section').forEach(el => el.classList.remove('active'));
+            document.getElementById(`step-${step}`).classList.add('active');
+            state.currentStep = step;
+
+            if (step === 3) renderFrameCatalog();
+            
+            if (step === 4) {
+                if (!state.selectedFrame) {
+                    alertToast("Pilih frame terlebih dahulu!");
+                    return navToStep(3);
+                }
+                state.capturedPhotos = [];
+                state.gifFrames = [];
+                state.gifUrl = null;
+                state.renderToken++;
+
+                updatePoseCounter();
+                initCamera();
+            } else {
+                stopCamera();
+            }
+
+            if (step === 5) {
+                renderFilters();
+                renderResult();
+            }
+        }
+
+        function selectFormat(format) {
+            state.selectedFormat = (format === 'gif') ? 'gif' : 'photo';
+            navToStep(3);
+        }
+
+        function renderFrameCatalog() {
+            const catalog = document.getElementById('frame-catalog');
+            catalog.innerHTML = '';
+            
+            frameDatabase.forEach(frame => {
+                const card = document.createElement('div');
+                card.className = 'card-brutal frame-card-hover bg-white p-3 flex flex-col group cursor-pointer h-full';
+                card.onclick = () => {
+                    state.selectedFrame = frame;
+                    navToStep(4);
+                };
+                
+                card.innerHTML = `
+                    <div class="w-full bg-gray-100 border-brutal aspect-[2/3] flex items-center justify-center overflow-hidden mb-4 relative">
+                        <img src="${frame.previewUrl}" alt="${frame.name}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" onerror="this.src='https://placehold.co/400x600/F4F4F0/111111?text=Frame+Preview'">
+                        <div class="absolute top-2 right-2 bg-brutalYellow border-2 border-brutalDark px-2 py-1 text-xs font-black shadow-neo-hover">
+                            ${frame.poseCount} POSE
+                        </div>
+                    </div>
+                    <div class="mt-auto">
+                        <h3 class="font-black text-lg uppercase truncate mb-3">${frame.name}</h3>
+                        <button class="btn-brutal bg-brutalDark text-white w-full py-2 font-bold text-sm pointer-events-none">PILIH FRAME</button>
+                    </div>
+                `;
+                catalog.appendChild(card);
+            });
+        }
+
+        async function initCamera() {
+            const video = document.getElementById('webcam');
+            try {
+                if (state.stream) stopCamera();
+                
+                const constraints = {
+                    video: { facingMode: state.facingMode, width: { ideal: 1280 }, height: { ideal: 720 } },
+                    audio: false
+                };
+                
+                state.stream = await navigator.mediaDevices.getUserMedia(constraints);
+                video.srcObject = state.stream;
+                
+                // Set mirror based on facing mode
+                applyMirrorTransform();
+
+            } catch (err) {
+                console.error("Camera error:", err);
+                alertToast("Gagal mengakses kamera. Periksa izin browser Anda.");
+                // Provide visual feedback for testing without camera
+                video.style.backgroundColor = '#FF2A7A';
+            }
+        }
+
+        function stopCamera() {
+            if (state.stream) {
+                state.stream.getTracks().forEach(track => track.stop());
+                state.stream = null;
+            }
+        }
+
+        function stopCameraAndReturn() {
+            stopCamera();
+            navToStep(3);
+        }
+
+        function toggleMirror() {
+            state.isMirrored = !state.isMirrored;
+            applyMirrorTransform();
+        }
+
+        function applyMirrorTransform() {
+            const video = document.getElementById('webcam');
+            if (state.isMirrored && state.facingMode === 'user') {
+                video.style.transform = 'scaleX(-1)';
+            } else {
+                video.style.transform = 'scaleX(1)';
+            }
+        }
+
+        function switchCamera() {
+            state.facingMode = state.facingMode === 'user' ? 'environment' : 'user';
+            // Auto turn off mirror for back camera
+            state.isMirrored = state.facingMode === 'user'; 
+            initCamera();
+        }
+
+        function playShutterSound() {
+            try {
+                const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                
+                osc.type = 'square';
+                osc.frequency.setValueAtTime(800, ctx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(100, ctx.currentTime + 0.1);
+                
+                gain.gain.setValueAtTime(0.5, ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.1);
+                
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                
+                osc.start();
+                osc.stop(ctx.currentTime + 0.15);
+            } catch(e) { console.log("Audio not supported"); }
+        }
+
+        function updatePoseCounter() {
+            if (state.selectedFormat === 'gif') {
+                document.getElementById('pose-counter').innerText = 'GIF 7s';
+                return;
+            }
+            const max = state.selectedFrame ? state.selectedFrame.poseCount : 0;
+            document.getElementById('pose-counter').innerText = `${state.capturedPhotos.length}/${max}`;
+        }
+
+        function startCapture() {
+            const btn = document.getElementById('btn-capture');
+            if (btn.disabled) return;
+            btn.disabled = true;
+
+            const overlay = document.getElementById('countdown-overlay');
+            const text = document.getElementById('countdown-text');
+            
+            overlay.classList.remove('hidden');
+            let count = 3;
+            
+            const animateCount = () => {
+                text.innerText = count;
+                text.classList.remove('animate-countdown');
+                void text.offsetWidth; // trigger reflow
+                text.classList.add('animate-countdown');
+            };
+
+            animateCount();
+            
+            const timer = setInterval(() => {
+                count--;
+                if (count > 0) {
+                    animateCount();
+             } else {
+                clearInterval(timer);
+                overlay.classList.add('hidden');
+                if (state.selectedFormat === 'gif') {
+                    startGifRecording(btn);      // tombol tetap disabled sampai rekaman selesai
+                } else {
+                    executeSnapshot();           // alur lama, tidak disentuh
+                    btn.disabled = false;
+                }
+            }          
+            }, 1000);
+        }
+
+        const GIF_DURATION_MS = 7000;
+        const GIF_INTERVAL_MS = 500;   // sekitar 2,5 fps
+        const GIF_CAPTURE_W = 480;
+        const RING_LEN = 289.03;
+
+        function startGifRecording(btn) {
+            const video = document.getElementById('webcam');
+            if (!state.stream || !video.videoWidth || video.readyState < 2) {
+                alertToast('Kamera belum siap. Coba lagi.');
+                btn.disabled = false;
+                return;
+            }
+
+            const ring = document.getElementById('gif-ring');
+            const prog = document.getElementById('gif-ring-progress');
+            const badge = document.getElementById('rec-badge');
+            const timerEl = document.getElementById('rec-timer');
+
+            const myId = ++state.recordId;
+            const cw = GIF_CAPTURE_W;
+            const ch = Math.round(cw * video.videoHeight / video.videoWidth);
+            const c = document.createElement('canvas');
+            c.width = cw; c.height = ch;
+            const cctx = c.getContext('2d');
+            const mirror = state.isMirrored && state.facingMode === 'user';
+
+            state.gifFrames = [];
+            ring.classList.remove('hidden');
+            badge.classList.remove('hidden');
+            prog.style.transition = 'none';
+            prog.style.strokeDashoffset = RING_LEN;
+            void prog.getBoundingClientRect();
+            prog.style.transition = `stroke-dashoffset ${GIF_DURATION_MS}ms linear`;
+            prog.style.strokeDashoffset = 0;
+
+            const startTime = performance.now();
+            let tid;
+
+            const finish = (ok) => {
+                clearTimeout(tid);
+                if (myId !== state.recordId) return;
+                ring.classList.add('hidden');
+                badge.classList.add('hidden');
+                btn.disabled = false;
+                if (ok && state.currentStep === 4) {
+                    playShutterSound();
+                    setTimeout(() => navToStep(5), 300);
+                } else {
+                    state.gifFrames = [];
+                }
+            };
+
+            const tick = () => {
+                if (myId !== state.recordId) return;
+                if (state.currentStep !== 4 || !state.stream) { finish(false); return; }
+
+                const elapsed = performance.now() - startTime;
+                cctx.save();
+                if (mirror) { cctx.translate(cw, 0); cctx.scale(-1, 1); }
+                cctx.drawImage(video, 0, 0, cw, ch);
+                cctx.restore();
+                state.gifFrames.push(c.toDataURL('image/jpeg', 0.85));
+                timerEl.innerText = Math.min(7, Math.round(elapsed / 1000));
+
+                const remain = GIF_DURATION_MS - elapsed;
+                if (remain <= GIF_INTERVAL_MS) {
+                    tid = setTimeout(() => finish(true), Math.max(remain, 0));
+                } else {
+                    tid = setTimeout(tick, GIF_INTERVAL_MS);
+                }
+            };
+            tick();
+        }
+
+        const MAX_PHOTO_CAPTURE_WIDTH = 960;
+
+        function executeSnapshot() {
+            const video = document.getElementById('webcam');
+            const flash = document.getElementById('flash-overlay');
+            const canvas = document.getElementById('capture-canvas');
+            const ctx = canvas.getContext('2d');
+
+            // Flash effect
+            flash.style.opacity = '1';
+            setTimeout(() => flash.style.opacity = '0', 150);
+            playShutterSound();
+
+            // Set canvas size to match video resolution
+            const sourceW = video.videoWidth || 1280;
+            const sourceH = video.videoHeight || 720;
+
+            const w = Math.min(sourceW, MAX_PHOTO_CAPTURE_WIDTH);
+            const h = Math.round(w * sourceH / sourceW);
+
+            canvas.width = w;
+            canvas.height = h;
+
+            ctx.save();
+            if (state.isMirrored && state.facingMode === 'user') {
+                ctx.translate(w, 0);
+                ctx.scale(-1, 1);
+            }
+
+            // Draw or fallback
+            if (video.readyState === 4) {
+                ctx.drawImage(video, 0, 0, w, h);
+            } else {
+                ctx.fillStyle = '#111111';
+                ctx.fillRect(0,0,w,h);
+                ctx.fillStyle = '#FFD700';
+                ctx.font = 'bold 50px sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillText('NO CAMERA SIGNAL', w/2, h/2);
+            }
+            ctx.restore();
+
+            state.capturedPhotos.push(canvas.toDataURL('image/jpeg', 0.9));
+            updatePoseCounter();
+
+            if (state.capturedPhotos.length >= state.selectedFrame.poseCount) {
+                setTimeout(() => navToStep(5), 600);
+            }
+        }
+
+        function renderFilters() {
+            const container = document.getElementById('filter-container');
+            container.innerHTML = '';
+            
+            FILTERS.forEach(f => {
+                const isSelected = state.selectedFilter === f.id;
+                const btn = document.createElement('button');
+                btn.className = `btn-brutal px-3 py-4 flex flex-col items-center justify-center gap-2 ${isSelected ? 'bg-brutalDark text-white' : 'bg-white text-brutalDark'}`;
+                btn.onclick = () => {
+                    state.selectedFilter = f.id;
+                    renderFilters();
+                    renderResult();
+                };
+                
+                // Simulated visual icon for filter
+                let filterColor = '#ccc';
+                if(f.id.includes('bw')) filterColor = '#444';
+                if(f.id.includes('warm') || f.id.includes('vintage')) filterColor = '#d97706';
+                if(f.id.includes('cool')) filterColor = '#0284c7';
+                if(f.id.includes('pink') || f.id.includes('pop')) filterColor = '#FF2A7A';
+
+                btn.innerHTML = `
+                    <div class="w-8 h-8 rounded-full border-2 border-current" style="background-color: ${filterColor}; filter: ${f.css !== 'none' ? f.css : ''}"></div>
+                    <span class="font-bold text-xs uppercase text-center">${f.name}</span>
+                `;
+                container.appendChild(btn);
+            });
+        }
+
+        // SISTEM PIPELINE RENDERING CANVAS (STEP 5 FINALIZATION)
+
+        function renderResult() {
+            const isGif = state.selectedFormat === 'gif';
+
+            const canvas = document.getElementById('final-canvas');
+            const gifImage = document.getElementById('final-gif');
+            const photoButton = document.getElementById('btn-save-photo');
+            const gifButton = document.getElementById('btn-save-gif');
+
+            canvas.classList.toggle('hidden', isGif);
+            gifImage.classList.toggle('hidden', !isGif);
+            photoButton.classList.toggle('hidden', isGif);
+            gifButton.classList.toggle('hidden', !isGif);
+
+            clearTimeout(state.renderTimer);
+
+            if (isGif) {
+                state.renderTimer = setTimeout(() => {
+                    createPhotoboothGIF(
+                        state.selectedFrame,
+                        state.gifFrames,
+                        state.selectedFilter
+                    );
+                }, 150);
+                return;
+            }
+
+            state.renderToken++;
+
+            renderFinalPhotobooth(
+                state.selectedFrame,
+                state.capturedPhotos,
+                state.selectedFilter
+            );
+        }
+
+        async function renderFinalPhotobooth(selectedFrame, capturedPhotoArray, activeFilter) {
+            const canvas = document.getElementById('final-canvas');
+            const ctx = canvas.getContext('2d');
+            const loader = document.getElementById('rendering-loader');
+            
+            loader.classList.remove('hidden');
+            canvas.style.opacity = '0';
+
+            try {
+                // Set ukuran Canvas sesuai aspek rasio frame
+                canvas.width = selectedFrame.aspectRatio.width;
+                canvas.height = selectedFrame.aspectRatio.height;
+
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+                const filterObj = FILTERS.find(f => f.id === activeFilter);
+                const filterCSS = filterObj ? filterObj.css : 'none';
+
+                // LAYER 1: Gambar Foto Pengguna ke Dalam Slot
+                for (let i = 0; i < selectedFrame.slots.length; i++) {
+                    const slot = selectedFrame.slots[i];
+                    const photoSrc = capturedPhotoArray[i];
+                    if (!photoSrc) continue;
+
+                    const photoImg = await loadImageCached(photoSrc);
+
+                    // Konversi koordinat persentase ke pixel Canvas
+                    let gapX = 0;
+                    let gapY = 0;
+
+                    // Pengaturan gap per frame
+                    if (selectedFrame.id === 'frame-1') {
+                        gapX = 4;
+                        gapY = 4;
+                    } else if (selectedFrame.id === 'frame-2') {
+                        if (slot.shape === 'ellipse') {
+                            gapX = 0; // Disarankan 0 agar elips pas dengan frame
+                            gapY = 0;
+                        } else {
+                            gapX = 0; // Disarankan 0 agar persegi tidak menutupi polkadot
+                            gapY = 0;
+                        }
+                    } else if (selectedFrame.id === 'frame-3') {
+                        gapX = 0;
+                        gapY = 0;
+                    } else if (selectedFrame.id === 'frame-4') {
+                        gapX = 0;
+                        gapY = 0;
+                    } else if (selectedFrame.id === 'frame-5') {
+                        gapX = 0;
+                        gapY = 0;
+                    } else if (selectedFrame.id === 'frame-6') {
+                        gapX = 0;
+                        gapY = 0;
+                    } else if (selectedFrame.id === 'frame-7') {
+                        gapX = 0;
+                        gapY = 0;
+                    } else if (selectedFrame.id === 'frame-8') {
+                        gapX = 0;
+                        gapY = 0;
+                    } else if (selectedFrame.id === 'frame-9') {
+                        gapX = 0;
+                        gapY = 0;
+                    }
+
+                    const pixelX = (slot.x / 100) * canvas.width - gapX;
+                    const pixelY = (slot.y / 100) * canvas.height - gapY;
+                    const pixelW = (slot.w / 100) * canvas.width + gapX * 2;
+                    const pixelH = (slot.h / 100) * canvas.height + gapY * 2;
+                    ctx.save();
+
+                    // Terapkan Efek Filter Canvas jika ada
+                    if (filterCSS !== 'none') {
+                        ctx.filter = filterCSS;
+                    }
+
+                    // Terapkan Clipping Path jika slot berbentuk Elips/Oval
+                    if (slot.shape === "ellipse") {
+                        ctx.beginPath();
+                        ctx.ellipse(
+                            pixelX + pixelW / 2,
+                            pixelY + pixelH / 2,
+                            pixelW / 2,
+                            pixelH / 2,
+                            0, 0, 2 * Math.PI
+                        );
+                        ctx.clip();
+                    } else if (slot.shape === "rect") {
+                        ctx.beginPath();
+                        ctx.rect(pixelX, pixelY, pixelW, pixelH);
+                        ctx.clip();
+                    }
+
+                    // Gambar foto dengan teknik Object-Fit Cover
+                    drawImageCover(ctx, photoImg, pixelX, pixelY, pixelW, pixelH);
+
+                    ctx.restore(); // Reset clipping & filter untuk layer selanjutnya
+                }
+
+                // LAYER 2: Gambar Overlay Frame di Atas Foto
+                try {
+                    const frameOverlayImg = await loadImageCached(selectedFrame.previewUrl);
+                    ctx.drawImage(frameOverlayImg, 0, 0, canvas.width, canvas.height);
+                } catch (err) {
+                    console.error("Gagal menggambar overlay frame:", err);
+                }
+
+                loader.classList.add('hidden');
+                canvas.style.opacity = '1';
+
+            } catch (err) {
+                console.error("Rendering error", err);
+                alertToast("Gagal memproses gambar final.");
+                loader.classList.add('hidden');
+            }
+        }
+
+        async function createPhotoboothGIF(frame, rawFrames, filterId) {
+            const token = ++state.renderToken;
+            const loader = document.getElementById('rendering-loader');
+            const imgEl = document.getElementById('final-gif');
+
+            loader.classList.remove('hidden');
+            imgEl.style.opacity = '0';
+            state.gifUrl = null;
+
+            try {
+                if (typeof gifshot === 'undefined') {
+                    throw new Error('Library gifshot belum termuat');
+                }
+
+                if (!rawFrames || rawFrames.length < 2) {
+                    throw new Error('Frame GIF tidak cukup');
+                }
+
+                // Resolusi kecil agar encoding cepat di browser.
+                const W = 400;
+                const H = Math.round(W * frame.aspectRatio.height / frame.aspectRatio.width);
+                const scale = W / frame.aspectRatio.width;
+                const filterObj = FILTERS.find(f => f.id === filterId);
+                const filterCSS = filterObj ? filterObj.css : 'none';
+                const gap = (frame.id === 'frame-1' ? 4 : 0) * scale;
+
+                // Memuat frame rekaman dan overlay frame lebih dahulu.
+                const loaded = await Promise.all([
+                    loadImageCached(frame.previewUrl),
+                    ...rawFrames.map(loadImageCached)
+                ]);
+
+                if (token !== state.renderToken) return;
+
+                const overlay = loaded[0];
+                const photos = loaded.slice(1);
+                const totalFrames = photos.length;
+                const offset = Math.max(1, Math.floor(totalFrames / frame.slots.length));
+
+                const off = document.createElement('canvas');
+                off.width = W;
+                off.height = H;
+                const ctx = off.getContext('2d');
+
+                // gifshot lebih stabil menerima HTMLImageElement
+                // yang sudah selesai dimuat, bukan array data URL mentah.
+                const gifImages = [];
+
+                for (let frameIndex = 0; frameIndex < totalFrames; frameIndex++) {
+                    ctx.clearRect(0, 0, W, H);
+                    ctx.fillStyle = '#ffffff';
+                    ctx.fillRect(0, 0, W, H);
+
+                    frame.slots.forEach((slot, slotIndex) => {
+                        const source = photos[(frameIndex + slotIndex * offset) % totalFrames];
+                        const x = (slot.x / 100) * W - gap;
+                        const y = (slot.y / 100) * H - gap;
+                        const w = (slot.w / 100) * W + gap * 2;
+                        const h = (slot.h / 100) * H + gap * 2;
+
+                        ctx.save();
+
+                        if (filterCSS !== 'none') {
+                            ctx.filter = filterCSS;
+                        }
+
+                        ctx.beginPath();
+
+                        if (slot.shape === 'ellipse') {
+                            ctx.ellipse(
+                                x + w / 2,
+                                y + h / 2,
+                                w / 2,
+                                h / 2,
+                                0,
+                                0,
+                                Math.PI * 2
+                            );
+                        } else {
+                            ctx.rect(x, y, w, h);
+                        }
+
+                        ctx.clip();
+                        drawImageCover(ctx, source, x, y, w, h);
+                        ctx.restore();
+                    });
+
+                    // Frame PNG selalu berada di lapisan paling atas.
+                    ctx.drawImage(overlay, 0, 0, W, H);
+
+                    // Buat image element dari hasil setiap canvas.
+                    const composedImage = await new Promise((resolve, reject) => {
+                        const image = new Image();
+
+                        image.onload = () => resolve(image);
+                        image.onerror = () => reject(new Error('Gagal memuat frame hasil GIF'));
+
+                        image.src = off.toDataURL('image/jpeg', 0.75);
+                    });
+
+                    gifImages.push(composedImage);
+
+                    // Menjaga UI tetap responsif saat menyusun banyak frame.
+                    if (frameIndex % 2 === 1) {
+                        await new Promise(resolve => setTimeout(resolve, 0));
+                    }
+
+                    if (token !== state.renderToken) return;
+                }
+
+                const gifUrl = await new Promise((resolve, reject) => {
+                    gifshot.createGIF({
+                        images: gifImages,
+                        gifWidth: W,
+                        gifHeight: H,
+                        frameDuration: 5,
+                        numWorkers: 2,
+                        sampleInterval: 20
+                    }, result => {
+                        if (result.error) {
+                            reject(new Error(result.errorMsg || 'gifshot gagal membuat GIF'));
+                            return;
+                        }
+
+                        resolve(result.image);
+                    });
+                });
+
+                if (token !== state.renderToken) return;
+
+                state.gifUrl = gifUrl;
+                imgEl.src = gifUrl;
+                imgEl.style.opacity = '1';
+                loader.classList.add('hidden');
+
+            } catch (error) {
+                console.error('GIF error:', error);
+                loader.classList.add('hidden');
+                alertToast(`Gagal membuat GIF: ${error.message}`);
+            }
+        }
+
+        async function downloadGif() {
+            if (!state.gifUrl) { alertToast('GIF belum siap.'); return; }
+            try {
+                const blob = await (await fetch(state.gifUrl)).blob();
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `bapotojo_photobooth_${Date.now()}.gif`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                setTimeout(() => URL.revokeObjectURL(url), 1000);
+                alertToast('GIF berhasil disimpan! 🎞️✨');
+            } catch (e) {
+                alertToast('Gagal mengunduh GIF.');
+            }
+        }
+        
+        function downloadPhoto() {
+            const canvas = document.getElementById('final-canvas');
+            const dataUrl = canvas.toDataURL('image/png');
+            
+            const a = document.createElement('a');
+            a.href = dataUrl;
+            a.download = `bapotojo_photobooth_${Date.now()}.png`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            
+            alertToast("Foto berhasil disimpan! 📸✨");
+        }
+
+        let toastTimeout;
+        function alertToast(msg) {
+            const toast = document.getElementById('toast');
+            document.getElementById('toast-msg').innerText = msg;
+            
+            clearTimeout(toastTimeout);
+            toast.classList.remove('translate-x-[150%]');
+            
+            toastTimeout = setTimeout(() => {
+                toast.classList.add('translate-x-[150%]');
+            }, 3000);
+        }
+
+        // Initialize App
+        window.onload = () => {
+            navToStep(1);
+        };
+    </script>
+</body>
+</html>
