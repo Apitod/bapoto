@@ -1,0 +1,113 @@
+/* Font di-bundle lokal (sebelumnya Google Fonts CDN) agar tetap tampil saat offline. */
+@import '@fontsource/space-grotesk/400.css';
+@import '@fontsource/space-grotesk/600.css';
+@import '@fontsource/space-grotesk/700.css';
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/*
+ * Style di bawah dipindahkan apa adanya dari <style> di index.html lama.
+ * Ditaruh di @layer agar utility Tailwind (mis. border-[6px], border-t-0)
+ * tetap menang atas class kustom, sama seperti perilaku Play CDN.
+ */
+@layer base {
+    body {
+        background-color: #F4F4F0;
+        color: #111111;
+        overflow-x: hidden;
+        -webkit-tap-highlight-color: transparent;
+    }
+}
+
+@layer components {
+    /* Dot Grid Patterns */
+    .bg-grid-light {
+        background-size: 24px 24px;
+        background-image: radial-gradient(circle, #111111 2px, rgba(0, 0, 0, 0) 1px);
+    }
+    .bg-grid-pink {
+        background-color: #FF2A7A;
+        background-size: 24px 24px;
+        background-image: radial-gradient(circle, #111111 2.5px, rgba(0, 0, 0, 0) 1px);
+    }
+
+    /* Neo Brutalism Core Styles */
+    .border-brutal {
+        border: 4px solid #111111;
+    }
+
+    .btn-brutal {
+        border: 4px solid #111111;
+        box-shadow: 6px 6px 0px #111111;
+        transition: all 0.1s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
+    }
+
+    .btn-brutal:hover {
+        transform: translate(2px, 2px);
+        box-shadow: 4px 4px 0px #111111;
+    }
+
+    .btn-brutal:active {
+        transform: translate(6px, 6px);
+        box-shadow: 0px 0px 0px #111111;
+    }
+
+    .card-brutal {
+        border: 4px solid #111111;
+        box-shadow: 8px 8px 0px #111111;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .card-brutal:hover {
+        transform: translate(-4px, -4px);
+        box-shadow: 12px 12px 0px #111111;
+    }
+
+    /* 3D Animations */
+    .animate-float {
+        animation: float3D 6s ease-in-out infinite;
+        transform-style: preserve-3d;
+    }
+
+    .animate-countdown {
+        animation: countZoom 1s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+    }
+
+    /* Utilities */
+    .hide-scrollbar::-webkit-scrollbar { display: none; }
+    .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+    .step-section {
+        display: none;
+        opacity: 0;
+        transition: opacity 0.3s ease-in-out;
+    }
+    .step-section.active {
+        display: flex;
+        opacity: 1;
+    }
+
+    /* Hover Effect for Frame Cards */
+    .frame-card-hover {
+        transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.3s ease;
+    }
+    .frame-card-hover:hover {
+        transform: perspective(1000px) rotateX(4deg) rotateY(-4deg) translateY(-6px);
+        box-shadow: 12px 12px 0px #111111;
+    }
+}
+
+@keyframes float3D {
+    0% { transform: perspective(1000px) rotateY(-10deg) rotateX(5deg) translateY(0px); }
+    50% { transform: perspective(1000px) rotateY(-5deg) rotateX(2deg) translateY(-15px); }
+    100% { transform: perspective(1000px) rotateY(-10deg) rotateX(5deg) translateY(0px); }
+}
+
+@keyframes countZoom {
+    0% { transform: scale(0.3); opacity: 0; }
+    50% { transform: scale(1.2); opacity: 1; }
+    100% { transform: scale(1); opacity: 0; }
+}

@@ -1,0 +1,25 @@
+{
+  "name": "bapotojo",
+  "private": true,
+  "version": "2.0.0",
+  "description": "BAPOTO.JO — web photobooth (Photo Strip & Animated GIF)",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "dependencies": {
+    "@fontsource/space-grotesk": "^5.3.0",
+    "gifshot": "^0.4.5"
+  },
+  "devDependencies": {
+    "autoprefixer": "^10.6.1",
+    "postcss": "^8.5.29",
+    "tailwindcss": "3.4",
+    "vite": "^5.4.21"
+  }
+}
