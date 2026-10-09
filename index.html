@@ -17,7 +17,7 @@
         <nav class="flex items-center gap-4 sm:gap-8">
             <button type="button" data-nav="1" class="font-bold text-sm sm:text-lg hover:text-brutalPink transition-colors">HOME</button>
             <button type="button" data-action="toast" data-message="Gallery is under construction!" class="font-bold text-sm sm:text-lg hover:text-brutalBlue transition-colors hidden sm:block">GALLERY</button>
-            <button type="button" class="btn-brutal bg-brutalDark text-white px-5 py-2 font-bold text-sm sm:text-base">LOGIN</button>
+            <a href="/admin.html" class="btn-brutal bg-brutalDark text-white px-5 py-2 font-bold text-sm sm:text-base inline-flex items-center hover:bg-gray-800 transition-colors">ADMIN</a>
         </nav>
     </header>
 
@@ -220,17 +220,70 @@
                 </div>
 
                 <!-- Actions -->
-                <div class="grid grid-cols-2 gap-4 mt-auto pt-6 border-t-4 border-brutalDark">
-                    <button type="button" id="btn-retake" data-nav="3" class="btn-brutal bg-white py-4 font-black flex justify-center items-center gap-2">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
-                        ULANG
+                <div class="flex flex-col gap-3 mt-auto pt-4 border-t-4 border-brutalDark">
+                    <button type="button" id="btn-create-qr" data-action="create-qr" class="btn-brutal bg-brutalYellow text-brutalDark py-4 font-black flex justify-center items-center gap-2 text-lg">
+                        <span>DAPATKAN QR CODE</span>
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"></path></svg>
                     </button>
-                    <button type="button" id="btn-save-photo" data-action="download-photo" class="btn-brutal bg-brutalGreen text-brutalDark py-4 font-black flex justify-center items-center gap-2">
-                        SIMPAN
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                    <div class="grid grid-cols-2 gap-3">
+                        <button type="button" id="btn-retake" data-nav="3" class="btn-brutal bg-white py-3 font-black text-sm flex justify-center items-center gap-1">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                            ULANG
+                        </button>
+                        <button type="button" id="btn-save-photo" data-action="download-photo" class="btn-brutal bg-brutalGreen text-brutalDark py-3 font-black text-sm flex justify-center items-center gap-1">
+                            UNDUH LOKAL
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                        </button>
+                        <button type="button" id="btn-save-gif" data-action="download-gif" class="hidden btn-brutal bg-brutalGreen text-brutalDark py-3 font-black text-sm flex justify-center items-center gap-1">
+                            UNDUH LOKAL GIF
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- STEP 6: QR Code & Selesai -->
+        <section id="step-6" class="step-section flex-col items-center justify-center w-full h-full bg-grid-light p-4 overflow-y-auto">
+            <div class="max-w-2xl w-full bg-white border-brutal shadow-neo-lg flex flex-col p-6 sm:p-8">
+                <div class="text-center mb-6">
+                    <span class="inline-block bg-brutalGreen text-brutalDark px-4 py-1 font-black text-xs sm:text-sm tracking-widest border-2 border-brutal -rotate-1 mb-2">SESI BERHASIL DIBUAT</span>
+                    <h2 class="font-black text-3xl sm:text-4xl uppercase tracking-tighter">SCAN UNTUK DOWNLOAD</h2>
+                    <p class="font-bold text-gray-600 text-sm sm:text-base mt-1">Arahkan kamera HP Anda ke QR Code di bawah untuk mengunduh hasil foto.</p>
+                </div>
+
+                <div class="flex flex-col sm:flex-row items-center justify-center gap-6 sm:gap-8 my-4">
+                    <!-- QR Code Container -->
+                    <div class="border-brutal p-3 bg-white shadow-neo flex flex-col items-center">
+                        <img id="qr-code-img" alt="QR Code Unduh" class="w-56 h-56 sm:w-64 sm:h-64 object-contain">
+                        <span class="text-xs font-black tracking-wider uppercase mt-2 text-gray-500">Scan via Kamera HP</span>
+                    </div>
+
+                    <!-- Info & Session Detail -->
+                    <div class="flex flex-col gap-3 text-left w-full sm:w-64">
+                        <div class="p-3 bg-brutalBg border-2 border-brutal">
+                            <span class="text-xs font-bold text-gray-500 block uppercase">Masa Berlaku</span>
+                            <span class="font-black text-sm text-brutalPink">⚡ 24 Jam (Penyimpanan Sementara)</span>
+                        </div>
+                        <div class="p-3 bg-brutalBg border-2 border-brutal">
+                            <span class="text-xs font-bold text-gray-500 block uppercase">Tautan Alternatif</span>
+                            <a id="qr-download-link" href="#" target="_blank" class="font-bold text-xs text-brutalBlue underline truncate block">Buka Halaman Unduh</a>
+                        </div>
+                        <div class="p-3 bg-brutalYellow border-2 border-brutal">
+                            <span class="text-xs font-bold text-brutalDark block uppercase">Otomatis Reset</span>
+                            <span class="font-black text-sm text-brutalDark">Sesi selesai dalam <span id="auto-reset-timer" class="text-lg font-black">60</span>s</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Footer Action Buttons -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-6 pt-6 border-t-4 border-brutalDark">
+                    <button type="button" id="btn-qr-download-local" data-action="download-current-result" class="btn-brutal bg-white text-brutalDark py-3 font-black text-sm flex justify-center items-center gap-2">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                        UNDUH CADANGAN (LOKAL)
                     </button>
-                    <button type="button" id="btn-save-gif" data-action="download-gif" class="hidden btn-brutal bg-brutalGreen text-brutalDark py-4 font-black flex justify-center items-center gap-2">
-                        SIMPAN GIF
+                    <button type="button" id="btn-finish-session" data-action="finish-session" class="btn-brutal bg-brutalPink text-white py-3 font-black text-base flex justify-center items-center gap-2 shadow-neo">
+                        <span>SELESAI / SESI BARU</span>
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
                     </button>
                 </div>
             </div>

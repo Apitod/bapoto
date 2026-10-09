@@ -17,7 +17,11 @@ import { alertToast } from './ui/toast.js';
 const video = document.getElementById('webcam');
 const camera = createCamera(video);
 const capture = createCaptureController({ camera, video, onComplete: () => navToStep(5) });
-const result = createResultController();
+
+const result = createResultController({
+    onSessionReady: () => navToStep(6),
+    onSessionReset: () => finishAndResetSession()
+});
 
 /** Normalisasi id step: '1' -> 1, '2b' tetap string. */
 function parseStep(value) {
@@ -29,7 +33,22 @@ async function startCameraForSession() {
     if (!ok) alertToast('Gagal mengakses kamera. Periksa izin browser Anda.');
 }
 
+function finishAndResetSession() {
+    result.stopAutoResetTimer();
+    camera.stop();
+    resetCaptureData();
+    state.selectedFrame = null;
+    state.selectedFilter = 'normal';
+    state.selectedFormat = 'photo';
+    navToStep(1);
+    alertToast('Sesi selesai. Siap untuk sesi berikutnya! 🎉');
+}
+
 function navToStep(step) {
+    if (state.currentStep === 6 && step !== 6) {
+        result.stopAutoResetTimer();
+    }
+
     document.querySelectorAll('.step-section').forEach(el => el.classList.remove('active'));
     document.getElementById(`step-${step}`).classList.add('active');
     state.currentStep = step;
@@ -82,7 +101,10 @@ const actions = {
     }),
     'capture': () => capture.startCapture(),
     'download-photo': () => result.downloadPhoto(),
-    'download-gif': () => result.downloadGif()
+    'download-gif': () => result.downloadGif(),
+    'create-qr': () => result.handleCreateQr(),
+    'finish-session': () => finishAndResetSession(),
+    'download-current-result': () => result.downloadCurrentResult()
 };
 
 document.addEventListener('click', event => {

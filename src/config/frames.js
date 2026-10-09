@@ -16,7 +16,7 @@ export const frameDatabase = [
         id: 'frame-1',
         name: 'Classic Strip',
         previewUrl: '/frames/frame1.png',
-        aspectRatio: { width: 1205, height: 1795 },
+        aspectRatio: { width: 1204, height: 1795 },
         poseCount: 6,
         gap: 4,
         slots: [
@@ -68,7 +68,7 @@ export const frameDatabase = [
         id: 'frame-4',
         name: 'Pink Ribbon',
         previewUrl: '/frames/frame4.png',
-        aspectRatio: { width: 1204, height: 1795 },
+        aspectRatio: { width: 1205, height: 1795 },
         poseCount: 5,
         gap: 0,
         slots: [
