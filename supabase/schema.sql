@@ -166,11 +166,15 @@ create table if not exists public.sessions (
     frame_name text,
     output_type text not null check (output_type in ('photo', 'gif')),
     result_path text not null,
+    single_photos jsonb default '[]'::jsonb,
     print_status text not null default 'unprinted' check (print_status in ('unprinted', 'printed')),
     created_at timestamp with time zone default timezone('utc'::text, now()) not null,
     expires_at timestamp with time zone not null,
     printed_at timestamp with time zone
 );
+
+-- Migrasi aman bila tabel sessions sudah ada sebelumnya
+alter table public.sessions add column if not exists single_photos jsonb default '[]'::jsonb;
 
 create index if not exists idx_sessions_download_token on public.sessions(download_token);
 create index if not exists idx_sessions_created_at on public.sessions(created_at desc);

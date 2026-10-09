@@ -298,34 +298,25 @@ Bucket privat saja belum cukup; kebijakan aksesnya juga harus benar.
 - [x] File kedaluwarsa dihapus oleh proses backend / RPC.
 - [x] Pengguna tanpa izin tidak dapat mengakses fitur admin atau hasil sesi secara bebas.
 - [x] Tidak ada secret backend di source code frontend.
+- [x] Fitur Download Single Foto Tanpa Frame: customer dapat mengunduh seluruh pose satuan asli selain Photo Strip utama (mis. 1 Photo Strip + 6 foto satuan = 7 file).
+- [x] Perbaikan Tata Letak Dashboard & Login: Card login admin berada presisi di tengah layar (horizontal & vertikal), card frame dan card antrean sesi tidak lagi tertutup atau meluber (overflow terkontrol dengan aspect-ratio dan max-height presisi).
 
-## 13. Risiko dan Keputusan yang Masih Dibutuhkan
+## 13. Catatan Implementasi Fitur Tambahan (Single Photos & Layout Fixes)
 
-1. Apakah frame diunggah sebagai PNG transparan dengan area foto kosong?
-2. Apakah versi awal menggunakan preset layout atau editor slot bebas?
-3. Apakah slot hanya persegi/persegi panjang atau juga lingkaran/bentuk lain?
-4. Apakah masa retensi 24 jam sesuai kebutuhan operasional?
-5. Apakah dashboard menampilkan semua sesi atau hanya yang belum dicetak?
-6. Apa yang terjadi jika hasil sudah dirender tetapi upload gagal?
-7. Berapa batas ukuran dan durasi GIF?
-8. Siapa yang boleh mengelola frame dan siapa yang boleh melihat/mencetak sesi?
+1. **Download Single Foto Tanpa Frame**:
+   - Jepretan foto mentah pada setiap pose dikonversi menjadi Blob JPEG dengan filter warna aktif yang dipilih pelanggan.
+   - Diunggah ke Supabase Storage pada path `${sessionId}/single_${idx + 1}_${token}.jpg` dan dicatat ke kolom `single_photos` di tabel `sessions`.
+   - Di halaman `download.html`, pelanggan dapat menekan "⚡ UNDUH SEMUA FOTO" untuk mengunduh semua foto secara berurutan, atau mengunduh foto pose tertentu secara individual.
+   - Di booth lokal (Step 5), tombol unduh lokal juga secara otomatis menyertakan foto pose satuan jika tersedia.
 
-## 14. Prioritas yang Direkomendasikan
-
-1. Audit dan lindungi fitur lama.
-2. Setup Supabase, skema data, dan akses aman.
-3. Migrasi frame lama ke sistem dinamis.
-4. Tentukan format konfigurasi slot.
-5. Bangun upload frame admin.
-6. Bangun upload hasil dan QR download.
-7. Bangun dashboard sesi dan pencetakan.
-8. Tambahkan cleanup otomatis.
-9. Uji keamanan, performa, dan deploy.
-
-Konfigurasi frame dinamis ditempatkan sebelum fitur upload hasil agar fondasi rendering dan manajemen frame stabil terlebih dahulu.
+2. **Perbaikan Tampilan & Responsivitas (Admin & Download)**:
+   - File `admin.html` dan `download.html` dimasukkan ke dalam `content` Tailwind CSS sehingga seluruh utilitas grid, flex, dan sizing ter-generate penuh.
+   - Utility `.hidden` diberi `!important` untuk mencegah konflik dengan `.flex` atau `.grid`.
+   - Preview frame di dashboard dibatasi dengan `aspect-ratio: 2/3` dan `max-height: 260px` agar tidak meledakkan grid layout.
+   - Box login admin diposisikan di tengah viewport secara horizontal dan vertikal.
 
 ---
 
 ## Status Dokumen
 
-Dokumen ini adalah rencana awal, bukan bukti bahwa fitur sudah diimplementasikan. Skema tabel, kebijakan RLS, desain editor frame, dan mekanisme download harus difinalisasi setelah audit menyeluruh terhadap kode yang berjalan.
+Dokumen diperbarui seiring terselesaikannya implementasi Tahap 0 sampai Tahap 6 beserta penyempurnaan UI dan fitur distribusi foto satuan tanpa frame.

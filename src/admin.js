@@ -309,8 +309,8 @@ function renderFramesGrid(isLocal) {
 
         card.innerHTML = `
             <div>
-                <div class="w-full bg-gray-100 border-2 border-brutal aspect-[2/3] flex items-center justify-center overflow-hidden mb-3 relative">
-                    <img src="${escapeHtml(frame.previewUrl)}" alt="${escapeHtml(frame.name)}" class="w-full h-full object-cover">
+                <div class="w-full bg-gray-100 border-2 border-brutal flex items-center justify-center overflow-hidden mb-3 relative" style="aspect-ratio: 2/3; max-height: 260px;">
+                    <img src="${escapeHtml(frame.previewUrl)}" alt="${escapeHtml(frame.name)}" class="w-full h-full object-contain" style="max-height: 260px;">
                     <div class="absolute top-2 right-2 bg-brutalYellow border-2 border-brutal px-2 py-0.5 text-[10px] font-black">
                         ${frame.poseCount} POSE
                     </div>

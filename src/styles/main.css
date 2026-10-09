@@ -98,6 +98,11 @@
         transform: perspective(1000px) rotateX(4deg) rotateY(-4deg) translateY(-6px);
         box-shadow: 12px 12px 0px #111111;
     }
+
+    /* Pastikan utility .hidden selalu menang atas .flex / .grid */
+    .hidden {
+        display: none !important;
+    }
 }
 
 @keyframes float3D {

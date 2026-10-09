@@ -107,10 +107,27 @@ export function createResultController({ onSessionReady, onSessionReset }) {
         });
     }
 
-    function downloadPhoto() {
+    async function downloadPhoto() {
         const dataUrl = el.canvas.toDataURL('image/png');
         triggerDownload(dataUrl, resultFilename('png'));
-        alertToast('Foto berhasil disimpan! 📸✨');
+        alertToast('Foto strip frame disimpan! 📸✨');
+
+        // Bila ada foto pose satuan, unduh juga foto satuan tanpa frame
+        if (state.capturedPhotos && state.capturedPhotos.length > 0) {
+            try {
+                const filterCss = getFilterCss(state.selectedFilter);
+                const singleBlobs = await createSinglePhotoBlobs(state.capturedPhotos, filterCss);
+                for (let i = 0; i < singleBlobs.length; i++) {
+                    await new Promise(r => setTimeout(r, 300));
+                    const sUrl = URL.createObjectURL(singleBlobs[i]);
+                    triggerDownload(sUrl, `bapotojo_pose_${i + 1}_${Date.now()}.jpg`);
+                    setTimeout(() => URL.revokeObjectURL(sUrl), 2000);
+                }
+                alertToast(`Total ${singleBlobs.length + 1} foto (1 frame + ${singleBlobs.length} satuan) berhasil disimpan! 🎉`);
+            } catch (err) {
+                console.warn('Gagal mengunduh sebagian foto satuan lokal:', err);
+            }
+        }
     }
 
     async function downloadGif() {
@@ -157,6 +174,40 @@ export function createResultController({ onSessionReady, onSessionReset }) {
         }, 1000);
     }
 
+/**
+ * Mengubah data URL foto jepretan mentah menjadi Blob JPEG dengan filter aktif yang dipilih.
+ */
+async function createSinglePhotoBlobs(photos, filterCss) {
+    if (!photos || photos.length === 0) return [];
+    const blobs = [];
+    for (let i = 0; i < photos.length; i++) {
+        try {
+            const img = new Image();
+            img.src = photos[i];
+            await new Promise((resolve, reject) => {
+                img.onload = resolve;
+                img.onerror = reject;
+            });
+
+            const canvas = document.createElement('canvas');
+            canvas.width = img.naturalWidth || img.width;
+            canvas.height = img.naturalHeight || img.height;
+            const ctx = canvas.getContext('2d');
+
+            if (filterCss && filterCss !== 'none') {
+                ctx.filter = filterCss;
+            }
+            ctx.drawImage(img, 0, 0);
+
+            const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', 0.92));
+            if (blob) blobs.push(blob);
+        } catch (err) {
+            console.error(`Gagal memproses single photo pose #${i + 1}:`, err);
+        }
+    }
+    return blobs;
+}
+
     async function handleCreateQr() {
         if (el.qrButton.disabled) return;
 
@@ -169,10 +220,21 @@ export function createResultController({ onSessionReady, onSessionReset }) {
 
         try {
             const blob = await getFinalResultBlob();
+
+            // Siapkan foto-foto satuan tanpa frame bila format photo strip
+            let singleBlobs = [];
+            if (state.selectedFormat === 'photo' && state.capturedPhotos.length > 0) {
+                singleBlobs = await createSinglePhotoBlobs(
+                    state.capturedPhotos,
+                    getFilterCss(state.selectedFilter)
+                );
+            }
+
             const res = await createSessionAndUpload({
                 blob,
                 format: state.selectedFormat,
-                frame: state.selectedFrame
+                frame: state.selectedFrame,
+                singleBlobs
             });
 
             if (!res.success) {

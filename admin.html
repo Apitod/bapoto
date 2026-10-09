@@ -62,10 +62,10 @@
     </header>
 
     <!-- Main Container -->
-    <main class="flex-grow p-4 sm:p-8 max-w-7xl w-full mx-auto">
+    <main class="flex-grow p-4 sm:p-8 max-w-7xl w-full mx-auto flex flex-col items-center">
 
-        <!-- 1. AUTH SCREEN (Bila Belum Login) -->
-        <section id="auth-section" class="flex flex-col items-center justify-center min-h-[60vh]">
+        <!-- 1. AUTH SCREEN (Bila Belum Login - Ditengah Sempurna) -->
+        <section id="auth-section" class="w-full flex-grow flex flex-col items-center justify-center min-h-[70vh] py-8 my-auto">
             <div class="max-w-md w-full bg-white border-brutal shadow-neo-lg p-6 sm:p-8">
                 <div class="text-center mb-6">
                     <span class="inline-block bg-brutalPink text-white px-3 py-1 font-black text-xs tracking-widest border-2 border-brutal -rotate-1 mb-2">OPERATOR ACCESS</span>
@@ -95,10 +95,10 @@
         </section>
 
         <!-- 2. DASHBOARD SCREEN (Bila Sudah Login) -->
-        <section id="dashboard-section" class="hidden flex flex-col gap-6">
+        <section id="dashboard-section" class="hidden flex flex-col gap-6 w-full">
 
             <!-- Top View Switcher -->
-            <div class="flex items-center gap-3 border-b-4 border-brutalDark pb-4">
+            <div class="flex items-center gap-3 border-b-4 border-brutalDark pb-4 w-full">
                 <button type="button" id="tab-nav-sessions" class="btn-brutal bg-brutalDark text-white px-5 py-3 font-black text-sm uppercase flex items-center gap-2">
                     <span>📸 ANTREAN SESI & CETAK</span>
                 </button>
@@ -108,7 +108,7 @@
             </div>
 
             <!-- VIEW 1: SESSIONS & PRINTING -->
-            <div id="view-sessions" class="flex flex-col gap-6">
+            <div id="view-sessions" class="flex flex-col gap-6 w-full">
                 <!-- Stats Bar & Actions -->
                 <div class="grid grid-cols-1 sm:grid-cols-4 gap-4">
                     <div class="p-4 bg-white border-brutal shadow-neo">
@@ -174,7 +174,7 @@
             </div>
 
             <!-- VIEW 2: FRAMES MANAGEMENT -->
-            <div id="view-frames" class="hidden flex flex-col gap-6">
+            <div id="view-frames" class="hidden flex flex-col gap-6 w-full">
                 <div class="flex flex-wrap items-center justify-between gap-4 bg-white border-brutal p-4 shadow-neo">
                     <div>
                         <h2 class="font-black text-xl uppercase">Daftar Frame Photobooth</h2>
@@ -186,7 +186,7 @@
                 </div>
 
                 <!-- Frames Grid -->
-                <div id="frames-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 pb-20">
+                <div id="frames-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 pb-20 w-full">
                     <!-- Injected via JS -->
                 </div>
             </div>
@@ -196,7 +196,7 @@
     </main>
 
     <!-- Modal Tambah Frame Baru -->
-    <div id="add-frame-modal" class="hidden fixed inset-0 z-[80] bg-black/70 flex items-center justify-center p-4 overflow-y-auto">
+    <div id="add-frame-modal" class="hidden fixed inset-0 flex items-center justify-center p-4 overflow-y-auto" style="background-color: rgba(0, 0, 0, 0.75); z-index: 100;">
         <div class="bg-white border-brutal shadow-neo-lg max-w-2xl w-full p-6 flex flex-col my-8">
             <div class="flex items-center justify-between pb-4 border-b-2 border-brutal mb-4">
                 <h3 class="font-black text-xl uppercase">Unggah Frame Baru</h3>
@@ -225,7 +225,7 @@
                 <!-- Live Preview Slot -->
                 <div class="border-brutal p-3 bg-brutalBg flex flex-col items-center">
                     <span class="text-xs font-black uppercase text-gray-500 mb-2">Pratinjau Komposisi Frame & Slot</span>
-                    <div id="frame-preview-box" class="relative w-48 aspect-[2/3] bg-white border-2 border-brutalDark flex items-center justify-center overflow-hidden">
+                    <div id="frame-preview-box" class="relative w-48 aspect-[2/3] bg-white border-2 border-brutalDark flex items-center justify-center overflow-hidden" style="max-height: 280px;">
                         <span id="frame-preview-placeholder" class="text-xs font-bold text-gray-400 text-center p-2">Pilih file untuk melihat preview</span>
                         <img id="frame-preview-img" class="hidden absolute inset-0 w-full h-full object-contain pointer-events-none z-10" alt="Overlay">
                         <div id="frame-preview-slots" class="absolute inset-0 pointer-events-none z-0"></div>
@@ -248,14 +248,14 @@
     </div>
 
     <!-- Modal Preview & Print -->
-    <div id="preview-modal" class="hidden fixed inset-0 z-[80] bg-black/70 flex items-center justify-center p-4">
-        <div class="bg-white border-brutal shadow-neo-lg max-w-2xl w-full p-6 flex flex-col max-h-[90vh]">
+    <div id="preview-modal" class="hidden fixed inset-0 flex items-center justify-center p-4" style="background-color: rgba(0, 0, 0, 0.75); z-index: 100;">
+        <div class="bg-white border-brutal shadow-neo-lg max-w-2xl w-full p-6 flex flex-col max-h-[90vh] overflow-hidden">
             <div class="flex items-center justify-between pb-4 border-b-2 border-brutal mb-4">
-                <h3 id="modal-title" class="font-black text-xl uppercase">Preview Hasil Foto</h3>
+                <h3 id="modal-title" class="font-black text-xl uppercase truncate">Preview Hasil Foto</h3>
                 <button type="button" id="btn-close-modal" class="btn-brutal bg-white p-1 text-xl font-black w-8 h-8 flex items-center justify-center">✕</button>
             </div>
-            <div class="flex-grow overflow-auto flex items-center justify-center bg-brutalBg border-2 border-brutal p-4 mb-4">
-                <img id="modal-image" class="max-h-[60vh] max-w-full object-contain" alt="Preview Foto">
+            <div class="flex-grow overflow-auto flex items-center justify-center bg-brutalBg border-2 border-brutal p-4 mb-4" style="max-height: 60vh;">
+                <img id="modal-image" class="max-h-[55vh] max-w-full object-contain" alt="Preview Foto">
             </div>
             <div class="flex items-center justify-end gap-3 pt-2">
                 <button type="button" id="btn-modal-print" class="btn-brutal bg-brutalYellow text-brutalDark px-6 py-3 font-black text-sm flex items-center gap-2">
@@ -267,7 +267,7 @@
     </div>
 
     <!-- Isolated Print Area for Browser Print Dialog -->
-    <div id="print-area" class="hidden">
+    <div id="print-area" class="hidden" style="display: none;">
         <img id="print-image" alt="Print Out">
     </div>
 

@@ -31,7 +31,7 @@ const RETENTION_HOURS = 24;
  *   error?: string
  * }>}
  */
-export async function createSessionAndUpload({ blob, format, frame }) {
+export async function createSessionAndUpload({ blob, format, frame, singleBlobs = [] }) {
     const downloadToken = crypto.randomUUID();
     const sessionId = crypto.randomUUID();
     const ext = format === 'gif' ? 'gif' : 'png';
@@ -67,7 +67,7 @@ export async function createSessionAndUpload({ blob, format, frame }) {
     }
 
     try {
-        // 1. Upload ke Supabase Storage
+        // 1. Upload file hasil utama (Photo Strip atau GIF)
         const mimeType = format === 'gif' ? 'image/gif' : 'image/png';
         const { error: uploadError } = await supabase.storage
             .from(STORAGE_BUCKET)
@@ -81,17 +81,51 @@ export async function createSessionAndUpload({ blob, format, frame }) {
             throw new Error(`Gagal mengunggah foto ke storage: ${uploadError.message}`);
         }
 
-        // 2. Simpan record metadata ke tabel sessions
-        const { error: dbError } = await supabase.from('sessions').insert({
+        // 2. Upload file foto satuan (single photos tanpa frame) bila ada
+        const singlePhotoPaths = [];
+        const tokenPrefix = downloadToken.slice(0, 8);
+        for (let i = 0; i < singleBlobs.length; i++) {
+            const singleBlob = singleBlobs[i];
+            const singlePath = `${sessionId}/single_${i + 1}_${tokenPrefix}.jpg`;
+            try {
+                const { error: sErr } = await supabase.storage
+                    .from(STORAGE_BUCKET)
+                    .upload(singlePath, singleBlob, {
+                        contentType: 'image/jpeg',
+                        upsert: false
+                    });
+                if (!sErr) {
+                    singlePhotoPaths.push(singlePath);
+                } else {
+                    console.warn(`Gagal upload foto satuan #${i + 1}:`, sErr.message);
+                }
+            } catch (singleUploadErr) {
+                console.warn(`Exception upload foto satuan #${i + 1}:`, singleUploadErr);
+            }
+        }
+
+        // 3. Simpan record metadata ke tabel sessions
+        const sessionRecord = {
             id: sessionId,
             download_token: downloadToken,
             frame_id: frame?.id || 'unknown',
             frame_name: frame?.name || 'Standard Frame',
             output_type: format,
             result_path: filePath,
+            single_photos: singlePhotoPaths,
             print_status: 'unprinted',
             expires_at: expiresAt
-        });
+        };
+
+        let { error: dbError } = await supabase.from('sessions').insert(sessionRecord);
+
+        // Fallback bila kolom single_photos belum dibuat di database user
+        if (dbError && dbError.message && dbError.message.toLowerCase().includes('single_photos')) {
+            console.warn('Kolom single_photos belum tersedia di database, menyimpan sesi tanpa kolom single_photos...');
+            delete sessionRecord.single_photos;
+            const retry = await supabase.from('sessions').insert(sessionRecord);
+            dbError = retry.error;
+        }
 
         if (dbError) {
             console.error('Database insert error:', dbError);
@@ -104,7 +138,8 @@ export async function createSessionAndUpload({ blob, format, frame }) {
             downloadToken,
             downloadUrl,
             qrDataUrl,
-            expiresAt
+            expiresAt,
+            singlePhotoPaths
         };
     } catch (err) {
         console.error('createSessionAndUpload failed:', err);
@@ -123,6 +158,7 @@ export async function createSessionAndUpload({ blob, format, frame }) {
  *   valid: boolean,
  *   session?: object,
  *   fileUrl?: string,
+ *   singlePhotos?: Array<{ index: number, url: string, path: string }>,
  *   isExpired?: boolean,
  *   error?: string
  * }>}
@@ -157,19 +193,46 @@ export async function getSessionByDownloadToken(token) {
             return { valid: false, isExpired: true, error: 'Masa berlaku unduhan foto telah berakhir (24 jam).' };
         }
 
-        // Buat Signed URL berumur 30 menit (1800 detik)
+        // 1. Buat Signed URL berumur 30 menit (1800 detik) untuk foto utama
         const { data: signedData, error: signError } = await supabase.storage
             .from(STORAGE_BUCKET)
             .createSignedUrl(data.result_path, 1800);
 
         if (signError || !signedData?.signedUrl) {
-            throw new Error('Gagal membuat tautan unduhan aman.');
+            throw new Error('Gagal membuat tautan unduhan aman untuk foto utama.');
+        }
+
+        // 2. Buat Signed URLs untuk foto satuan tanpa frame bila ada
+        const singlePhotos = [];
+        const rawPaths = Array.isArray(data.single_photos) ? data.single_photos : [];
+
+        if (rawPaths.length > 0) {
+            try {
+                const { data: batchSigned, error: batchError } = await supabase.storage
+                    .from(STORAGE_BUCKET)
+                    .createSignedUrls(rawPaths, 1800);
+
+                if (!batchError && Array.isArray(batchSigned)) {
+                    batchSigned.forEach((item, index) => {
+                        if (item && item.signedUrl) {
+                            singlePhotos.push({
+                                index: index + 1,
+                                path: item.path,
+                                url: item.signedUrl
+                            });
+                        }
+                    });
+                }
+            } catch (singleErr) {
+                console.warn('Gagal membuat signed URL untuk foto satuan:', singleErr);
+            }
         }
 
         return {
             valid: true,
             session: data,
-            fileUrl: signedData.signedUrl
+            fileUrl: signedData.signedUrl,
+            singlePhotos
         };
     } catch (err) {
         return { valid: false, error: err.message };
