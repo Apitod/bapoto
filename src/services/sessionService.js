@@ -14,12 +14,59 @@ const STORAGE_BUCKET = 'session-results';
 const RETENTION_HOURS = 24;
 
 /**
+ * Buat UUID v4 yang aman dan kompatibel di semua browser dan konteks.
+ * Menggunakan crypto.randomUUID pada Secure Contexts (HTTPS/localhost),
+ * dan fallback berbasis crypto.getRandomValues (RFC4122 compliant) pada insecure context (misal HTTP iPad di LAN) atau browser lama.
+ */
+export function generateSecureUUID() {
+    if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+        return crypto.randomUUID();
+    }
+    if (typeof crypto !== 'undefined' && typeof crypto.getRandomValues === 'function') {
+        const bytes = new Uint8Array(16);
+        crypto.getRandomValues(bytes);
+        bytes[6] = (bytes[6] & 0x0f) | 0x40; // Version 4
+        bytes[8] = (bytes[8] & 0x3f) | 0x80; // Variant RFC4122
+        const hex = Array.from(bytes, b => b.toString(16).padStart(2, '0')).join('');
+        return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
+    }
+    // Fallback darurat bila Web Cryptography API tidak tersedia
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
+        const r = (Math.random() * 16) | 0;
+        const v = c === 'x' ? r : (r & 0x3) | 0x8;
+        return v.toString(16);
+    });
+}
+
+function isNetworkOrTransientError(err) {
+    if (!err || !err.message) return false;
+    const msg = err.message.toLowerCase();
+    return msg.includes('load failed') || msg.includes('failed to fetch') || msg.includes('network');
+}
+
+/**
+ * Upload helper dengan 1x controlled retry untuk mengantisipasi transient network failure di browser tablet/mobile.
+ */
+async function uploadToStorageWithRetry(bucket, path, data, options) {
+    let { data: resData, error } = await supabase.storage.from(bucket).upload(path, data, options);
+    if (error && isNetworkOrTransientError(error)) {
+        console.warn(`[Storage] Upload awal ke ${path} gagal (${error.message}), mencoba sekali lagi...`);
+        await new Promise(r => setTimeout(r, 600));
+        const retry = await supabase.storage.from(bucket).upload(path, data, options);
+        resData = retry.data;
+        error = retry.error;
+    }
+    return { data: resData, error };
+}
+
+/**
  * Buat sesi photobooth baru, unggah hasil ke storage, dan buat QR code.
  *
  * @param {object} params
  * @param {Blob} params.blob             File gambar final (PNG atau GIF)
  * @param {string} params.format         'photo' atau 'gif'
  * @param {object} params.frame          Objek frame terpilih
+ * @param {Blob[]} [params.singleBlobs]  Array file gambar pose satuan
  * @returns {Promise<{
  *   success: boolean,
  *   sessionId: string,
@@ -32,8 +79,22 @@ const RETENTION_HOURS = 24;
  * }>}
  */
 export async function createSessionAndUpload({ blob, format, frame, singleBlobs = [] }) {
-    const downloadToken = crypto.randomUUID();
-    const sessionId = crypto.randomUUID();
+    if (!blob || !(blob instanceof Blob) || blob.size === 0) {
+        return {
+            success: false,
+            error: 'File hasil foto kosong atau gagal diproses.'
+        };
+    }
+
+    if (blob.size > 15 * 1024 * 1024) {
+        return {
+            success: false,
+            error: 'Ukuran file foto melebihi batas kapasitas 15MB.'
+        };
+    }
+
+    const downloadToken = generateSecureUUID();
+    const sessionId = generateSecureUUID();
     const ext = format === 'gif' ? 'gif' : 'png';
     const filePath = `${sessionId}/${downloadToken}.${ext}`;
 
@@ -90,18 +151,34 @@ export async function createSessionAndUpload({ blob, format, frame, singleBlobs 
     }
 
     try {
-        // 1. Upload file hasil utama (Photo Strip atau GIF)
+        // Konversi Blob ke ArrayBuffer:
+        // Di Safari WebKit iOS/iPadOS, mengirim Blob mentah ke @supabase/storage-js menyebabkan
+        // library membungkusnya ke FormData dengan field name kosong (''), yang dapat memicu
+        // bug WebKit streaming abort ("Load failed"). Mengirim ArrayBuffer memicu pengiriman
+        // body binary murni (application/octet-stream atau image/png) tanpa multipart overhead.
+        const uploadBinary = await blob.arrayBuffer();
         const mimeType = format === 'gif' ? 'image/gif' : 'image/png';
-        const { error: uploadError } = await supabase.storage
-            .from(STORAGE_BUCKET)
-            .upload(filePath, blob, {
+
+        // 1. Upload file hasil utama (Photo Strip atau GIF)
+        const { error: uploadError } = await uploadToStorageWithRetry(
+            STORAGE_BUCKET,
+            filePath,
+            uploadBinary,
+            {
                 contentType: mimeType,
                 upsert: false
-            });
+            }
+        );
 
         if (uploadError) {
             console.error('Storage upload error:', uploadError);
-            throw new Error(`Gagal mengunggah foto ke storage: ${uploadError.message}`);
+            let detail = uploadError.message;
+            if (isNetworkOrTransientError(uploadError)) {
+                detail = `Koneksi jaringan terputus atau request ditolak browser (Load failed). Pastikan koneksi internet aktif dan bucket '${STORAGE_BUCKET}' telah dibuat di Supabase.`;
+            } else if (detail.toLowerCase().includes('row-level security') || detail.toLowerCase().includes('policy')) {
+                detail = `Kebijakan akses RLS Supabase menolak upload ke bucket '${STORAGE_BUCKET}'. Pastikan policy INSERT untuk anon telah aktif.`;
+            }
+            throw new Error(`Gagal mengunggah foto ke storage: ${detail}`);
         }
 
         // 2. Upload file foto satuan (single photos tanpa frame) bila ada
@@ -109,14 +186,20 @@ export async function createSessionAndUpload({ blob, format, frame, singleBlobs 
         const tokenPrefix = downloadToken.slice(0, 8);
         for (let i = 0; i < singleBlobs.length; i++) {
             const singleBlob = singleBlobs[i];
+            if (!singleBlob || singleBlob.size === 0) continue;
+
             const singlePath = `${sessionId}/single_${i + 1}_${tokenPrefix}.jpg`;
             try {
-                const { error: sErr } = await supabase.storage
-                    .from(STORAGE_BUCKET)
-                    .upload(singlePath, singleBlob, {
+                const singleBinary = await singleBlob.arrayBuffer();
+                const { error: sErr } = await uploadToStorageWithRetry(
+                    STORAGE_BUCKET,
+                    singlePath,
+                    singleBinary,
+                    {
                         contentType: 'image/jpeg',
                         upsert: false
-                    });
+                    }
+                );
                 if (!sErr) {
                     singlePhotoPaths.push(singlePath);
                 } else {

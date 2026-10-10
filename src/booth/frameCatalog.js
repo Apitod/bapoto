@@ -26,7 +26,7 @@ export function renderFrameCatalog(container, frames, onSelect) {
         const name = escapeHtml(frame.name);
         card.innerHTML = `
             <div class="w-full bg-gray-100 border-brutal aspect-[2/3] flex items-center justify-center overflow-hidden mb-4 relative">
-                <img src="${escapeHtml(frame.previewUrl)}" alt="${name}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
+                <img src="${escapeHtml(frame.previewUrl)}" alt="${name}" crossorigin="anonymous" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500">
                 <div class="absolute top-2 right-2 bg-brutalYellow border-2 border-brutalDark px-2 py-1 text-xs font-black shadow-neo-hover">
                     ${Number(frame.poseCount)} POSE
                 </div>

@@ -105,15 +105,31 @@ export function createResultController({ onSessionReady, onSessionReset }) {
         }
 
         return await new Promise((resolve, reject) => {
-            el.canvas.toBlob(blob => {
-                if (blob) resolve(blob);
-                else reject(new Error('Gagal menghasilkan file gambar canvas.'));
-            }, 'image/png');
+            try {
+                el.canvas.toBlob(blob => {
+                    if (blob) resolve(blob);
+                    else reject(new Error('Gagal menghasilkan file gambar canvas.'));
+                }, 'image/png');
+            } catch (err) {
+                if (err.name === 'SecurityError' || err.message?.toLowerCase().includes('insecure')) {
+                    reject(new Error('Canvas dibatasi oleh kebijakan keamanan browser (The operation is insecure). Harap refresh atau gunakan frame lokal.'));
+                } else {
+                    reject(err);
+                }
+            }
         });
     }
 
     async function downloadPhoto() {
-        const dataUrl = el.canvas.toDataURL('image/png');
+        let dataUrl;
+        try {
+            dataUrl = el.canvas.toDataURL('image/png');
+        } catch (err) {
+            console.error('downloadPhoto canvas error:', err);
+            alertToast('Gagal mengekspor foto: Pembatasan keamanan browser.');
+            return;
+        }
+
         triggerDownload(dataUrl, resultFilename('png'));
         alertToast('Foto strip frame disimpan! 📸✨');
 
@@ -194,6 +210,9 @@ async function createSinglePhotoBlobs(photos, filterCss) {
     for (let i = 0; i < photos.length; i++) {
         try {
             const img = new Image();
+            if (photos[i] && !photos[i].startsWith('data:')) {
+                img.crossOrigin = 'anonymous';
+            }
             img.src = photos[i];
             await new Promise((resolve, reject) => {
                 img.onload = resolve;
