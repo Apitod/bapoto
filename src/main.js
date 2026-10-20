@@ -14,6 +14,10 @@ import { renderFrameCatalog } from './booth/frameCatalog.js';
 import { renderFilters } from './booth/filterPicker.js';
 import { alertToast } from './ui/toast.js';
 
+if (window.isSecureContext === false) {
+    console.warn('[BAPOTO] Halaman dibuka pada konteks tidak aman (HTTP). Gunakan HTTPS atau localhost agar fitur browser tidak dibatasi.');
+}
+
 const video = document.getElementById('webcam');
 const camera = createCamera(video);
 const capture = createCaptureController({ camera, video, onComplete: () => navToStep(5) });

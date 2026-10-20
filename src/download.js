@@ -8,6 +8,10 @@ import { getSessionByDownloadToken } from './services/sessionService.js';
 import { alertToast } from './ui/toast.js';
 import { printPhoto } from './utils/print.js';
 
+if (window.isSecureContext === false) {
+    console.warn('[BAPOTO] Halaman unduh dibuka pada konteks tidak aman (HTTP). Gunakan HTTPS atau localhost agar unduhan tidak dibatasi browser.');
+}
+
 const el = {
     loading: document.getElementById('loading-state'),
     error: document.getElementById('error-state'),

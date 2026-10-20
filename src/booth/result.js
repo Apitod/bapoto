@@ -10,6 +10,7 @@ import { alertToast } from '../ui/toast.js';
 import { triggerDownload, resultFilename } from '../utils/download.js';
 import { createSessionAndUpload } from '../services/sessionService.js';
 import { printPhoto } from '../utils/print.js';
+import { canvasToBlob, canvasToDataURL } from '../utils/canvasExport.js';
 
 export function createResultController({ onSessionReady, onSessionReset }) {
     const el = {
@@ -104,29 +105,16 @@ export function createResultController({ onSessionReady, onSessionReset }) {
             return await res.blob();
         }
 
-        return await new Promise((resolve, reject) => {
-            try {
-                el.canvas.toBlob(blob => {
-                    if (blob) resolve(blob);
-                    else reject(new Error('Gagal menghasilkan file gambar canvas.'));
-                }, 'image/png');
-            } catch (err) {
-                if (err.name === 'SecurityError' || err.message?.toLowerCase().includes('insecure')) {
-                    reject(new Error('Canvas dibatasi oleh kebijakan keamanan browser (The operation is insecure). Harap refresh atau gunakan frame lokal.'));
-                } else {
-                    reject(err);
-                }
-            }
-        });
+        return await canvasToBlob(el.canvas, 'image/png');
     }
 
     async function downloadPhoto() {
         let dataUrl;
         try {
-            dataUrl = el.canvas.toDataURL('image/png');
+            dataUrl = canvasToDataURL(el.canvas, 'image/png');
         } catch (err) {
             console.error('downloadPhoto canvas error:', err);
-            alertToast('Gagal mengekspor foto: Pembatasan keamanan browser.');
+            alertToast(err.message);
             return;
         }
 
@@ -303,8 +291,8 @@ async function createSinglePhotoBlobs(photos, filterCss) {
         }
 
         try {
-            const dataUrl = el.canvas.toDataURL('image/png');
-            if (!dataUrl) {
+            const dataUrl = canvasToDataURL(el.canvas, 'image/png');
+            if (!dataUrl || dataUrl === 'data:,') {
                 alertToast('Hasil foto belum siap dicetak.');
                 return;
             }
