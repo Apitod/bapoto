@@ -152,11 +152,15 @@ Catatan tambahan: `/ac` → 404 (rute yang ada: `/admin`, `/download`; `/*.html`
 - `/auth/v1/health` + apikey → `200 {"name":"GoTrue","version":"v2.197.0"}`
 - `POST /auth/v1/token` (kredensial dummy) → `400 invalid_credentials` + header
   `access-control-allow-origin: https://bapoto.vercel.app` → jalur login normal, CORS benar
-- `/rest/v1/frames` → `200`, 3 frame tersimpan; `/rest/v1/sessions` → `200`
-- **Yang masih kurang:** bucket `session-results` → `NoSuchBucket`. Bucket `frames` ada.
-  Jalankan `supabase/fix_session_storage_rls.sql` di SQL Editor, kalau tidak QR/upload sesi tetap gagal.
+- `/rest/v1/frames` → `200`, 4 frame tersimpan; `/rest/v1/sessions` → `200`
+- **Bucket `session-results`: ADA dan bisa dipakai.** Project ID dashboard =
+  `plycpimieyouteywwvre` (cocok dengan bundle). Probe publik salah baca: bucket private
+  membalas `NoSuchBucket` di route `/object/public/`. Uji upload anon:
+  `POST /storage/v1/object/session-results/probe-hermes.png` → `200 {"Key":...}`.
+  File probe 8 byte tertinggal (anon tak boleh delete, `403 AccessDenied` = policy benar);
+  hapus manual dari dashboard bila mau bersih.
 
-**Patch kode (belum di-commit):** 6 file, +46/−15.
+**Patch kode (commit `2312656`, sudah di-push ke `main`):** 6 file, +46/−15.
 
 | File | Perubahan |
 |---|---|
@@ -175,4 +179,5 @@ Verifikasi:
 - Jalur unduh blob belum diuji end-to-end: sandbox tidak punya kamera (`NotFoundError`).
   Perlu uji manual di kiosk: jepret → UNDUH LOKAL.
 
-**Belum disentuh:** commit/push, deploy, SQL bucket.
+**Belum diuji:** alur penuh di kiosk — jepret kamera → UNDUH LOKAL → QR (sandbox tanpa kamera).
+Admin login dengan akun asli juga belum diuji dari sini (tak punya password).
