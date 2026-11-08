@@ -23,6 +23,7 @@ import {
     deleteFrameById
 } from './services/frameService.js';
 import { LAYOUT_PRESETS } from './config/layoutPresets.js';
+import { canvasToBlob, toCanvasExportError } from './utils/canvasExport.js';
 import { alertToast } from './ui/toast.js';
 import { escapeHtml } from './utils/html.js';
 import { printPhoto } from './utils/print.js';
@@ -1379,7 +1380,7 @@ el.addFrameForm.addEventListener('submit', async (e) => {
             const exportCtx = exportCanvas.getContext('2d');
             renderTransformedFrameToContext(exportCtx, exportCanvas.width, exportCanvas.height);
 
-            const processedBlob = await new Promise((resolve) => exportCanvas.toBlob(resolve, 'image/png'));
+            const processedBlob = await canvasToBlob(exportCanvas, 'image/png');
             if (!processedBlob) {
                 throw new Error('Gagal merender gambar frame hasil transformasi.');
             }
@@ -1418,7 +1419,7 @@ el.addFrameForm.addEventListener('submit', async (e) => {
         loadFrames();
     } catch (err) {
         console.error('Submit frame error:', err);
-        alertToast(`Gagal: ${err.message}`);
+        alertToast(`Gagal: ${toCanvasExportError(err).message}`);
     } finally {
         el.btnSubmitFrame.disabled = false;
         el.btnSubmitFrame.innerText = originalBtnText;
@@ -1509,7 +1510,7 @@ document.addEventListener('click', async (e) => {
             renderFramesGrid(false);
             alertToast(newStatus ? 'Frame diaktifkan!' : 'Frame dinonaktifkan.');
         } catch (err) {
-            alertToast(`Gagal: ${err.message}`);
+            alertToast(`Gagal: ${toCanvasExportError(err).message}`);
         } finally {
             toggleFrameBtn.disabled = false;
         }

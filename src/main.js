@@ -16,6 +16,7 @@ import { alertToast } from './ui/toast.js';
 
 if (window.isSecureContext === false) {
     console.warn('[BAPOTO] Halaman dibuka pada konteks tidak aman (HTTP). Gunakan HTTPS atau localhost agar fitur browser tidak dibatasi.');
+    alertToast('Halaman ini tidak memakai HTTPS. Kamera, unduh, dan penyimpanan bisa diblokir browser. Buka lewat https:// atau localhost.');
 }
 
 const video = document.getElementById('webcam');

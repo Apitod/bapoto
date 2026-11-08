@@ -10,7 +10,7 @@ import { alertToast } from '../ui/toast.js';
 import { triggerDownload, resultFilename } from '../utils/download.js';
 import { createSessionAndUpload } from '../services/sessionService.js';
 import { printPhoto } from '../utils/print.js';
-import { canvasToBlob, canvasToDataURL } from '../utils/canvasExport.js';
+import { canvasToBlob, canvasToDataURL, toCanvasExportError } from '../utils/canvasExport.js';
 
 export function createResultController({ onSessionReady, onSessionReset }) {
     const el = {
@@ -109,16 +109,19 @@ export function createResultController({ onSessionReady, onSessionReset }) {
     }
 
     async function downloadPhoto() {
-        let dataUrl;
+        let blob;
         try {
-            dataUrl = canvasToDataURL(el.canvas, 'image/png');
+            // Blob URL, bukan data URL: strip 2-5MB sebagai data: URL diabaikan Safari/Firefox.
+            blob = await canvasToBlob(el.canvas, 'image/png');
         } catch (err) {
             console.error('downloadPhoto canvas error:', err);
             alertToast(err.message);
             return;
         }
 
-        triggerDownload(dataUrl, resultFilename('png'));
+        const stripUrl = URL.createObjectURL(blob);
+        triggerDownload(stripUrl, resultFilename('png'));
+        setTimeout(() => URL.revokeObjectURL(stripUrl), 2000);
         alertToast('Foto strip frame disimpan! 📸✨');
 
         // Bila ada foto pose satuan, unduh juga foto satuan tanpa frame
@@ -217,7 +220,7 @@ async function createSinglePhotoBlobs(photos, filterCss) {
             }
             ctx.drawImage(img, 0, 0);
 
-            const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', 0.92));
+            const blob = await canvasToBlob(canvas, 'image/jpeg', 0.92);
             if (blob) blobs.push(blob);
         } catch (err) {
             console.error(`Gagal memproses single photo pose #${i + 1}:`, err);
@@ -277,7 +280,7 @@ async function createSinglePhotoBlobs(photos, filterCss) {
 
         } catch (err) {
             console.error('handleCreateQr error:', err);
-            alertToast(`Gagal: ${err.message}`);
+            alertToast(`Gagal: ${toCanvasExportError(err).message}`);
         } finally {
             el.qrButton.disabled = false;
             el.qrButton.innerHTML = originalText;

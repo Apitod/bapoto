@@ -6,6 +6,7 @@
 import gifshot from 'gifshot';
 import { loadImageCached } from './imageLoader.js';
 import { slotToPixels, drawPhotoInSlot } from './canvasRenderer.js';
+import { canvasToDataURL } from '../utils/canvasExport.js';
 import { GIF_OUTPUT_W } from '../config/capture.js';
 
 /** Error khusus untuk render yang dibatalkan (token sudah usang). */
@@ -21,7 +22,7 @@ function imageFromCanvas(canvas) {
         const image = new Image();
         image.onload = () => resolve(image);
         image.onerror = () => reject(new Error('Gagal memuat frame hasil GIF'));
-        image.src = canvas.toDataURL('image/jpeg', 0.75);
+        image.src = canvasToDataURL(canvas, 'image/jpeg', 0.75);
     });
 }
 

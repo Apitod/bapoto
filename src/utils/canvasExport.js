@@ -13,21 +13,21 @@ export function toCanvasExportError(err) {
     return err instanceof Error ? err : new Error(String(err));
 }
 
-export function canvasToDataURL(canvas, type = 'image/png') {
+export function canvasToDataURL(canvas, type = 'image/png', quality) {
     try {
-        return canvas.toDataURL(type);
+        return canvas.toDataURL(type, quality);
     } catch (err) {
         throw toCanvasExportError(err);
     }
 }
 
-export function canvasToBlob(canvas, type = 'image/png') {
+export function canvasToBlob(canvas, type = 'image/png', quality) {
     return new Promise((resolve, reject) => {
         try {
             canvas.toBlob(blob => {
                 if (blob) resolve(blob);
                 else reject(new Error('Gagal menghasilkan file gambar.'));
-            }, type);
+            }, type, quality);
         } catch (err) {
             reject(toCanvasExportError(err));
         }
